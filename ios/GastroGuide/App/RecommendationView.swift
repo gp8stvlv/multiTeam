@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import GastroAPI
 
@@ -11,6 +12,7 @@ struct RecommendationView: View {
     @State private var loading = false
     @State private var errorMessage: String?
     @State private var task: Task<Void, Never>?
+    @State private var taskGeneration: UUID?
     @State private var consumption: ConsumptionSelection?
     @State private var feed: [FeedItem] = []
     @State private var feedError: String?
@@ -28,13 +30,13 @@ struct RecommendationView: View {
                 HStack { Text("Бюджет, ₽"); TextField("Не задан", text: $budget).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
                 HStack { Text("Максимум ккал"); TextField("Не задан", text: $calories).keyboardType(.decimalPad).multilineTextAlignment(.trailing) }
                 Text("Предпочтения и аллергии из профиля применяются сервером.").font(.caption).foregroundStyle(.secondary)
-                Button { startNewRequest() } label: {
+                Button { startNewRequest(reuseKey: pendingRequest != nil && run == nil) } label: {
                     HStack { Text("Подобрать"); if loading { Spacer(); ProgressView() } }
                 }.disabled(loading || query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }.disabled(loading)
             if loading {
                 Section { Text("Агенты ищут блюда и проверяют ограничения…").font(.callout)
-                    Button("Прекратить ожидание") { task?.cancel(); loading = false }
+                    Button("Прекратить ожидание") { stopWaiting() }
                 }
             }
             if let errorMessage {
@@ -99,7 +101,7 @@ struct RecommendationView: View {
         .onChange(of: budget) { _ in resetPendingRequest() }
         .onChange(of: calories) { _ in resetPendingRequest() }
         .onChange(of: mode) { _ in resetPendingRequest() }
-        .onDisappear { task?.cancel(); loading = false }
+        .onDisappear { stopWaiting() }
     }
 
     private func validatedRequest() throws -> RecommendationCreate {
@@ -122,36 +124,67 @@ struct RecommendationView: View {
     private func startNewRequest(reuseKey: Bool = false) {
         guard !loading else { return }
         if !reuseKey { resetPendingRequest() }
+        let generation = UUID()
+        taskGeneration = generation
+        loading = true; errorMessage = nil
         task = Task {
-            loading = true; errorMessage = nil
-            defer { loading = false }
+            defer { finishWaiting(generation: generation) }
             do {
+                guard isCurrentTask(generation) else { return }
                 let request = try pendingRequest ?? validatedRequest()
                 pendingRequest = request
                 let client = try session.client()
                 run = nil
                 let submitted = try await client.createRecommendation(request, idempotencyKey: requestKey)
+                guard isCurrentTask(generation) else { return }
                 run = submitted.run
                 if !submitted.run.isTerminal {
-                    run = try await client.waitForRecommendation(id: submitted.run.id, interval: submitted.retryAfter)
+                    let completed = try await client.waitForRecommendation(id: submitted.run.id, interval: submitted.retryAfter)
+                    guard isCurrentTask(generation) else { return }
+                    run = completed
                 }
-            } catch is CancellationError { }
-            catch { errorMessage = session.report(error) }
+            } catch {
+                if isCurrentTask(generation), !isCancellation(error) { errorMessage = session.report(error) }
+            }
         }
     }
     private func resetPendingRequest() { requestKey = UUID().uuidString; pendingRequest = nil }
     private func resume(id: String) {
         guard !loading else { return }
+        let generation = UUID()
+        taskGeneration = generation
+        loading = true; errorMessage = nil
         task = Task {
-            loading = true; errorMessage = nil
-            defer { loading = false }
+            defer { finishWaiting(generation: generation) }
             do {
+                guard isCurrentTask(generation) else { return }
                 let client = try session.client()
-                run = try await client.recommendation(id: id)
-                if run?.isTerminal == false { run = try await client.waitForRecommendation(id: id) }
-            } catch is CancellationError { }
-            catch { errorMessage = session.report(error) }
+                let current = try await client.recommendation(id: id)
+                guard isCurrentTask(generation) else { return }
+                run = current
+                if !current.isTerminal {
+                    let completed = try await client.waitForRecommendation(id: id)
+                    guard isCurrentTask(generation) else { return }
+                    run = completed
+                }
+            } catch {
+                if isCurrentTask(generation), !isCancellation(error) { errorMessage = session.report(error) }
+            }
         }
+    }
+    private func isCurrentTask(_ generation: UUID) -> Bool {
+        taskGeneration == generation && !Task.isCancelled
+    }
+    private func isCancellation(_ error: Error) -> Bool {
+        error is CancellationError || (error as? URLError)?.code == .cancelled
+    }
+    private func finishWaiting(generation: UUID) {
+        guard isCurrentTask(generation) else { return }
+        taskGeneration = nil; task = nil; loading = false
+    }
+    private func stopWaiting() {
+        taskGeneration = nil
+        task?.cancel(); task = nil; loading = false
     }
     private func loadFeed() async {
         do { feed = try await session.client().feed().items; feedError = nil }
