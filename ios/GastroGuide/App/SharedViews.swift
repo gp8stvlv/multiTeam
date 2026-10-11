@@ -119,12 +119,22 @@ struct EvidenceView: View {
         }
         .navigationTitle("Источники")
         .task {
-            loading = true
+            loading = true; errorMessage = nil
             defer { loading = false }
             do {
                 let client = try session.client()
-                for id in ids { evidence.append(try await client.evidence(id: id)) }
-            } catch { errorMessage = session.report(error) }
+                var loaded: [Evidence] = []
+                var seen = Set<String>()
+                for id in ids where seen.insert(id).inserted {
+                    try Task.checkCancellation()
+                    loaded.append(try await client.evidence(id: id))
+                }
+                try Task.checkCancellation()
+                evidence = loaded
+            } catch is CancellationError { }
+            catch {
+                if !Task.isCancelled { errorMessage = session.report(error) }
+            }
         }
     }
 }
