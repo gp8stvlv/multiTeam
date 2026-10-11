@@ -1,0 +1,84 @@
+name: gastrogid
+x-backend: &backend
+  build: .
+  restart: unless-stopped
+  init: true
+  env_file: .env
+  environment: &environment
+    APP_ENV: ${APP_ENV:-production}
+    AUTH_SECRET: ${AUTH_SECRET:?Run scripts/configure.py first}
+    INTERNAL_TOKEN: ${INTERNAL_TOKEN:?Run scripts/configure.py first}
+    CATALOG_URL: http://catalog:8001
+    USERS_URL: http://users:8002
+    RECOMMENDATIONS_URL: http://recommendations:8003
+  depends_on:
+    postgres:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:' + __import__('os').environ['SERVICE_PORT'] + '/health', timeout=5)"]
+    interval: 15s
+    timeout: 6s
+    retries: 10
+    start_period: 60s
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/configure.py first}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/init-db.sh:/docker-entrypoint-initdb.d/10-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  catalog:
+    <<: *backend
+    image: gastrogid-catalog:local
+    command: ["uvicorn", "services.catalog.app:app", "--host", "0.0.0.0", "--port", "8001"]
+    environment:
+      <<: *environment
+      SERVICE_PORT: "8001"
+      CATALOG_DATABASE_URL: postgresql+psycopg://catalog:${POSTGRES_PASSWORD}@postgres:5432/catalog
+      CATALOG_DATA_DIR: /app/data/catalog
+      CATALOG_MODEL_CACHE: /app/model-cache
+    volumes:
+      - catalog-data:/app/data
+      - model-cache:/app/model-cache
+  users:
+    <<: *backend
+    image: gastrogid-users:local
+    command: ["uvicorn", "services.users.app:app", "--host", "0.0.0.0", "--port", "8002"]
+    environment:
+      <<: *environment
+      SERVICE_PORT: "8002"
+      USERS_DATABASE_URL: postgresql+psycopg://users:${POSTGRES_PASSWORD}@postgres:5432/users
+  recommendations:
+    <<: *backend
+    image: gastrogid-recommendations:local
+    command: ["uvicorn", "services.recommendations.app:app", "--host", "0.0.0.0", "--port", "8003"]
+    environment:
+      <<: *environment
+      SERVICE_PORT: "8003"
+      RECOMMENDATIONS_DATABASE_URL: postgresql+psycopg://recommendations:${POSTGRES_PASSWORD}@postgres:5432/recommendations
+  gateway:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    ports:
+      - ${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8080}:80
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/docs:/usr/share/nginx/html:ro
+    depends_on:
+      catalog:
+        condition: service_healthy
+      users:
+        condition: service_healthy
+      recommendations:
+        condition: service_healthy
+volumes:
+  postgres-data:
+  catalog-data:
+  model-cache:

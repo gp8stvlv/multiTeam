@@ -1,0 +1,220 @@
+%% Physical runtime model, inspected against services/{catalog,users,recommendations}/models.py.
+%% Three independently owned PostgreSQL databases on one pgvector/pg16 instance:
+%% C_* = catalog database; U_* = users database; R_* = recommendations database.
+%% Solid connections explicitly labelled SQL FK are database foreign keys.
+%% Dotted connections are logical application references: NO SQL FK, validated via API.
+%% JSON result/options/nutrition/snapshots/trace are EMBEDDED values, not extra tables.
+%% restaurant rating, daily totals and consumed nutrition are computed, not stored tables.
+erDiagram
+    C_RESTAURANTS {
+        varchar id PK
+        varchar name
+        varchar address
+        float latitude
+        float longitude
+        json cuisines "embedded string array"
+        varchar phone "nullable"
+        varchar website "nullable"
+        varchar timezone
+        bool active
+        varchar active_menu_version_id "logical local pointer; no SQL FK"
+        bool is_demo
+        timestamptz updated_at
+    }
+    C_DISHES {
+        varchar id PK
+        varchar restaurant_id FK
+        varchar name
+        text description "nullable"
+    }
+    C_MENU_IMPORTS {
+        varchar id PK
+        varchar restaurant_id FK
+        varchar source_kind
+        varchar filename
+        varchar content_type
+        bytea file_bytes "original uploaded HTML-PDF-image in database"
+        varchar status
+        int progress_percent
+        timestamptz created_at
+        timestamptz updated_at
+        json error "embedded Error; nullable"
+        varchar published_menu_version_id "logical local pointer; no SQL FK"
+        int revision
+        varchar currency
+        json draft_items "embedded DraftItem array with nutrition and evidence IDs"
+        json warnings "embedded string array"
+        int attempts
+    }
+    C_MENU_VERSIONS {
+        varchar id PK
+        varchar restaurant_id FK "UNIQUE restaurant_id + version"
+        varchar import_id FK,UK
+        int version "UNIQUE restaurant_id + version"
+        varchar status
+        timestamptz published_at
+        varchar currency
+    }
+    C_MENU_ITEMS {
+        varchar id PK
+        varchar dish_id FK
+        varchar restaurant_id FK
+        varchar menu_version_id FK
+        varchar name
+        text description "nullable"
+        json ingredients "embedded string array"
+        bool ingredients_complete
+        json tags "embedded string array"
+        int price_minor "integer kopecks for RUB"
+        varchar currency
+        float portion_weight_g "nullable"
+        varchar allergen_info_status
+        json allergens "embedded AllergenDeclaration array; evidence IDs are logical"
+        json nutrition "embedded NutritionFacts; per portion; null means unknown"
+        json evidence_ids "embedded logical evidence UUID array"
+        bool is_demo
+        vector384 embedding "pgvector vector(384); nullable while indexing"
+        varchar embedding_model "nullable while indexing"
+    }
+    C_EVIDENCE {
+        varchar id PK
+        varchar restaurant_id FK
+        varchar import_id FK "nullable for review sources"
+        varchar menu_item_id FK "nullable for draft fragments and reviews"
+        varchar source_kind
+        varchar source_reference
+        int page_number "nullable"
+        text fragment_text
+        bool is_demo
+        timestamptz updated_at
+    }
+    C_REVIEWS {
+        varchar id PK
+        varchar restaurant_id FK
+        float rating
+        text text
+        varchar source
+        varchar source_url "nullable"
+        timestamptz reviewed_at
+        bool is_demo
+        varchar evidence_id FK
+        vector384 embedding "pgvector vector(384); nullable while indexing"
+        varchar embedding_model "nullable while indexing"
+    }
+
+    U_USERS {
+        varchar id PK
+        varchar email UK
+        text password_hash
+        varchar role
+        timestamptz created_at
+    }
+    U_USER_PROFILES {
+        varchar user_id PK,FK
+        varchar timezone
+        json favorite_cuisines "embedded string array"
+        json disliked_ingredients "embedded string array"
+        varchar spice_preference
+        numeric daily_calories_target "numeric(20,8); nullable"
+        numeric daily_protein_target_g "numeric(20,8); nullable"
+        numeric daily_fat_target_g "numeric(20,8); nullable"
+        numeric daily_carbs_target_g "numeric(20,8); nullable"
+        int default_budget_minor "nullable"
+        varchar currency
+        bool proactive_enabled
+        timestamptz updated_at
+    }
+    U_USER_ALLERGIES {
+        varchar user_id PK,FK
+        varchar code PK "composite PK user_id + code"
+        varchar note "nullable"
+    }
+    U_DIARY_ENTRIES {
+        varchar id PK
+        varchar user_id FK "UNIQUE user_id + idempotency_key"
+        varchar kind
+        timestamptz consumed_at
+        numeric portions "numeric(20,8); fractions allowed"
+        varchar note "nullable"
+        varchar idempotency_key "UNIQUE user_id + idempotency_key"
+        varchar request_hash
+        timestamptz deleted_at "nullable; soft deletion preserves idempotency"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    U_DIARY_SNAPSHOTS {
+        varchar entry_id PK,FK
+        json data "immutable EMBEDDED snapshot: name, menu-dish-restaurant-version refs, ingredients, allergens, price, nutrition"
+    }
+    U_DISH_FEEDBACK {
+        varchar id PK
+        varchar user_id FK "UNIQUE user_id + dish_id"
+        varchar dish_id "logical Catalog reference; no SQL FK"
+        varchar recommendation_id "logical Recommendation reference; nullable; no SQL FK"
+        varchar rating
+        varchar comment "nullable"
+        timestamptz updated_at
+    }
+
+    R_RECOMMENDATION_REQUESTS {
+        varchar id PK
+        varchar user_id "logical Users reference; UNIQUE user_id + idempotency_key"
+        varchar idempotency_key "UNIQUE user_id + idempotency_key"
+        varchar payload_hash
+        json payload "embedded request: mode, query, constraints, max_options, context reference"
+        json context "embedded previous request context; nullable"
+        varchar status
+        varchar trigger
+        json result "EMBEDDED RecommendationResult with options-items-nutrition-restaurant-evidence; nullable"
+        json error "embedded Error; nullable"
+        int attempts
+        varchar lease_owner "nullable"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    R_AGENT_RUNS {
+        varchar id PK
+        varchar request_id "logical local request reference; no SQL FK"
+        json data "EMBEDDED trace: agent, status, timestamps, tool_names, evidence_ids, summary, tokens"
+    }
+    R_FEED_ITEMS {
+        varchar id PK
+        varchar user_id "logical Users reference; UNIQUE user_id + daily_key"
+        varchar daily_key "UNIQUE user_id + daily_key"
+        varchar recommendation_id "logical local request reference; no SQL FK"
+        varchar title
+        varchar status
+        timestamptz created_at
+        timestamptz expires_at
+    }
+
+    C_RESTAURANTS ||--o{ C_DISHES : "SQL FK restaurant_id"
+    C_RESTAURANTS ||--o{ C_MENU_IMPORTS : "SQL FK restaurant_id"
+    C_RESTAURANTS ||--o{ C_MENU_VERSIONS : "SQL FK restaurant_id"
+    C_RESTAURANTS ||--o{ C_MENU_ITEMS : "SQL FK restaurant_id"
+    C_RESTAURANTS ||--o{ C_EVIDENCE : "SQL FK restaurant_id"
+    C_RESTAURANTS ||--o{ C_REVIEWS : "SQL FK restaurant_id"
+    C_MENU_IMPORTS ||--o| C_MENU_VERSIONS : "SQL FK import_id UNIQUE"
+    C_MENU_VERSIONS ||--o{ C_MENU_ITEMS : "SQL FK menu_version_id"
+    C_DISHES ||--o{ C_MENU_ITEMS : "SQL FK dish_id"
+    C_MENU_IMPORTS o|--o{ C_EVIDENCE : "SQL FK import_id nullable"
+    C_MENU_ITEMS o|--o{ C_EVIDENCE : "SQL FK menu_item_id nullable"
+    C_EVIDENCE ||--o{ C_REVIEWS : "SQL FK evidence_id"
+    C_RESTAURANTS o|..o| C_MENU_VERSIONS : "LOGICAL active_menu_version_id; no SQL FK"
+    C_MENU_IMPORTS o|..o| C_MENU_VERSIONS : "LOGICAL published_menu_version_id; no SQL FK"
+    C_MENU_ITEMS }o..o{ C_EVIDENCE : "LOGICAL IDs embedded in evidence_ids-allergens-nutrition"
+
+    U_USERS ||--o| U_USER_PROFILES : "SQL FK user_id"
+    U_USER_PROFILES ||--o{ U_USER_ALLERGIES : "SQL FK user_id; composite PK"
+    U_USERS ||--o{ U_DIARY_ENTRIES : "SQL FK user_id"
+    U_DIARY_ENTRIES ||--o| U_DIARY_SNAPSHOTS : "SQL FK entry_id; immutable JSON data"
+    U_USERS ||--o{ U_DISH_FEEDBACK : "SQL FK user_id"
+
+    R_RECOMMENDATION_REQUESTS ||..o{ R_AGENT_RUNS : "LOGICAL request_id; no SQL FK"
+    R_RECOMMENDATION_REQUESTS ||..o{ R_FEED_ITEMS : "LOGICAL recommendation_id; no SQL FK"
+    U_USERS ||..o{ R_RECOMMENDATION_REQUESTS : "CROSS-SERVICE user_id; JWT-API; no SQL FK"
+    U_USERS ||..o{ R_FEED_ITEMS : "CROSS-SERVICE user_id; JWT-API; no SQL FK"
+    C_DISHES ||..o{ U_DISH_FEEDBACK : "CROSS-SERVICE dish_id verified via Catalog API; no SQL FK"
+    R_RECOMMENDATION_REQUESTS o|..o{ U_DISH_FEEDBACK : "CROSS-SERVICE recommendation_id; no SQL FK"
+    C_MENU_ITEMS o|..o{ U_DIARY_SNAPSHOTS : "CROSS-SERVICE menu_item_id embedded in snapshot.data; no SQL FK"
+    C_MENU_ITEMS }o..o{ R_RECOMMENDATION_REQUESTS : "CROSS-SERVICE IDs embedded in result.options.items; no SQL FK"

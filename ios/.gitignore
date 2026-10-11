@@ -1,0 +1,6 @@
+GastroAPI/.build/
+GastroAPI/.cache/
+GastroAPI/.swiftpm/
+**/xcuserdata/
+**/DerivedData/
+.DS_Store

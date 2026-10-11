@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ГастроГид API</title>
+  <link rel="stylesheet" href="assets/swagger-ui.css">
+  <style>
+    body { margin: 0 }
+    nav { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center;
+      padding: 16px; font: 16px system-ui; background: #103b35; color: white }
+    nav a { color: white; white-space: nowrap }
+  </style>
+</head>
+<body>
+  <nav aria-label="Сервисы API">
+    <span>ГастроГид</span>
+    <a href="?service=catalog">Каталог / RAG</a>
+    <a href="?service=users">Профиль / питание</a>
+    <a href="?service=recommendations">Агенты / рекомендации</a>
+  </nav>
+  <div id="swagger-ui"></div>
+  <script src="assets/swagger-ui-bundle.js"></script>
+  <script>
+    const service = new URLSearchParams(location.search).get('service');
+    SwaggerUIBundle({
+      url: '/openapi/' + (['catalog', 'users', 'recommendations'].includes(service) ? service : 'catalog') + '.json',
+      dom_id: '#swagger-ui', deepLinking: true, persistAuthorization: false
+    });
+  </script>
+</body>
+</html>

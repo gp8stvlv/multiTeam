@@ -1,0 +1,10 @@
+[project]
+name = "gastrogid"
+version = "0.1.0"
+requires-python = ">=3.12,<3.14"
+description = "Restaurant discovery, grounded multi-agent recommendations and nutrition diary"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
