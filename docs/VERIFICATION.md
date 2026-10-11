@@ -29,7 +29,11 @@ Smoke прошёл против локального Docker gateway с PostgreSQ
 
 На VPS три backend сервиса и PostgreSQL healthy. API слушает только `127.0.0.1:8080`; наружу открыт SSH. Проверка сетевых слушателей подтвердила отсутствие публичного HTTP bind. Модель сохранена в Docker volume. GLM Coding Plan с `glm-5.3-flash` подключён настоящим ключом.
 
-Живые `dish_search` и `meal_plan` завершились `completed/ready`: источники, текущие версии меню, цены, порции и суммарные КБЖУ сверены с Catalog. Meal plan выдержал ограничения 1000 рублей и 900 ккал. Admin login и чтение обеих trace через настоящий gateway вернули HTTP 200. В обоих запусках завершились coordinator, search, nutrition, planner и validator; выполнялись `search_menu` и `calculate_meal`. Эти результаты получены через настоящий внешний GLM API, без внедрённых fake моделей. Проактивный smoke сейчас ожидает очередной периодический цикл scheduler.
+Живые `dish_search` и `meal_plan` завершились `completed/ready`: источники, текущие версии меню, цены, порции и суммарные КБЖУ сверены с Catalog. Meal plan выдержал ограничения 1000 рублей и 900 ккал. Admin login и чтение обеих trace через настоящий gateway вернули HTTP 200. В обоих запусках завершились coordinator, search, nutrition, planner и validator; выполнялись `search_menu` и `calculate_meal`. Эти результаты получены через настоящий внешний GLM API, без внедрённых fake моделей.
+
+Полный `scripts/smoke.py --url http://127.0.0.1:55080 --agents --proactive` завершился с exit 0 и `LIVE API SMOKE PASSED`. Проактивную рекомендацию создал штатный scheduler с интервалом 900 секунд: запуск `5577dbdf-8a46-4cff-bb8f-ad1fe587a46d` создан 19:59:41 UTC, завершён `completed/ready` в 20:01:18 UTC. Проверены её происхождение, связь с персональной лентой, источники и точные суммы по актуальному меню. Интервал scheduler не менялся, задание вручную не создавалось.
+
+Admin trace этого проактивного запуска вернула HTTP 200: все 12 шагов coordinator/search/nutrition/planner/validator завершены, инструменты `search_menu` и `calculate_meal` выполнялись. Четыре итоговых evidence из двух источников независимо прочитаны с HTTP 200. После smoke подтверждено `proactive_enabled=false` у тестового профиля; существующие пользовательские профили не менялись.
 
 ## Контракты и диаграммы
 
@@ -43,9 +47,10 @@ Runtime ER отражает **16 таблиц** в трёх сервисных �
 
 Полный Xcode и iOS SDK на машине отсутствуют. Полная сборка приложения, работа экранов в Simulator и Keychain **не проверены**. Foundation smoke не доказывает работоспособность SwiftUI приложения.
 
+Workflow `.github/workflows/ios-build.yml` подготовлен для Foundation тестов и сборки iOS Simulator. По решению пользователя код остаётся в локальной ветке `feat/gastrogid-mvp`; push и запуск GitHub Actions не выполнялись.
+
 ## Оставшиеся проверки
 
-- Завершить работающий `scripts/smoke.py --agents --proactive`: живой подбор блюда, meal plan и admin trace уже прошли; остаётся результат настоящего периодического scheduler.
 - В полном Xcode: сборка, запуск и пользовательский сценарий iOS, включая Keychain.
 - После выбора публичного доступа: TLS и адрес gateway для физического телефона. Текущий SSH-туннель доступен на Mac и подходит Simulator; loopback Mac недоступен физическому iPhone.
 

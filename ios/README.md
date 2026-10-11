@@ -79,7 +79,7 @@ swift run --package-path ios/GastroAPI GastroSmoke
 
 Для проверки компиляции подготовлен [GitHub Actions workflow](../.github/workflows/ios-build.yml): на `macos-15` он запускает `swift test --package-path ios/GastroAPI`, затем собирает схему `GastroGuide` для `generic/platform=iOS Simulator` с `CODE_SIGNING_ALLOWED=NO`. Workflow использует только чтение репозитория, не сохраняет checkout credentials и не обращается к backend или LLM; ключи, сертификаты и provisioning не требуются. Он запускается при push изменений `ios/**` или самого workflow и вручную через `workflow_dispatch`.
 
-Workflow пока подготовлен только локально: push и запуск CI не выполнялись. YAML, пути и команды проверены локально, но результата сборки на GitHub runner ещё нет. Даже успешный CI build подтвердит компиляцию и Foundation тесты; проверка экранов, Keychain и реального устройства останется отдельной.
+По решению пользователя код и workflow остаются локально в ветке `feat/gastrogid-mvp`: push и запуск CI не выполнялись. YAML, пути и команды проверены локально, но результата сборки на GitHub runner ещё нет. Даже успешный CI build подтвердит компиляцию и Foundation тесты; проверка экранов, Keychain и реального устройства останется отдельной.
 
 Перечисленный PASS относится к локальному и удалённому API через переносимый Foundation клиент на Mac. Он не подтверждает доступ с физического iPhone, работу SSH-туннеля из Simulator или результат вызова GLM на VPS.
 
