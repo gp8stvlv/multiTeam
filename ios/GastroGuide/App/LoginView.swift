@@ -62,7 +62,7 @@ struct ServerSettingsView: View {
     var body: some View {
         Form {
             Section("Базовый адрес API") {
-                TextField("http://127.0.0.1:8080/api/v1", text: $baseURL)
+                TextField("https://90.156.213.217/api/v1", text: $baseURL)
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
                 Text("Включите /api/v1. Смена сервера завершает текущую сессию.").font(.caption)
                 if baseURL.lowercased().hasPrefix("http:") {

@@ -2,6 +2,8 @@
 
 Учебный MVP мобильного приложения: поиск блюд в нескольких ресторанах, рекомендации с учётом предпочтений и аллергий, дневник питания и КБЖУ. Основная реализация находится на backend; iOS — минимальный нативный SwiftUI клиент.
 
+Работающий API: **https://90.156.213.217/api/v1**, Swagger: **https://90.156.213.217/docs/**. Backend, база, RAG и GLM работают на VPS; держать Docker или SSH-туннель на Mac не требуется. Этот HTTPS адрес уже выбран по умолчанию в iOS. В существующей установке сохранённый адрес можно изменить в «Профиль → Адрес API».
+
 ## Запуск локально
 
 Нужны Docker с Compose. Из корня репозитория:
@@ -14,7 +16,7 @@ docker compose up --build -d
 
 `configure.py` создаёт приватный `.env` со случайными JWT, внутренним токеном, паролем PostgreSQL и паролем демонстрационного администратора. Существующий файл не перезаписывается. `.env` исключён из Git. Если он уже создан, первый шаг пропускается.
 
-API и Swagger: **http://127.0.0.1:8080/docs/**. Вверху переключаются три актуальные спецификации, автоматически сформированные из реализованных маршрутов. Адрес для iOS Simulator: **http://127.0.0.1:8080/api/v1**. Для мобильного клиента откройте `ios/GastroGuide/GastroGuide.xcodeproj`, инструкции — [ios/README.md](ios/README.md).
+Локальный API и Swagger: **http://127.0.0.1:8080/docs/**. Вверху переключаются три актуальные спецификации, автоматически сформированные из реализованных маршрутов. Для локальной разработки укажите в настройках iOS Simulator **http://127.0.0.1:8080/api/v1**. Для мобильного клиента откройте `ios/GastroGuide/GastroGuide.xcodeproj`, инструкции — [ios/README.md](ios/README.md).
 
 Первая индексация скачивает реальную multilingual MiniLM ONNX модель (384 измерения). До её завершения `/ready/catalog` и поиск возвращают `503`; просмотр каталога уже доступен. Кеш модели и базы сохраняются в Docker volumes.
 
@@ -54,29 +56,58 @@ docker compose up -d --force-recreate recommendations
 
 ## Развёрнутый VPS
 
-Backend установлен на `ubuntu@90.156.213.217` в `/home/ubuntu/gastrogid`. Gateway слушает только `127.0.0.1:8080` сервера; три сервиса и PostgreSQL работают в Docker. Публичный доступ требует отдельно выбранного адреса и конфигурации TLS.
+Backend установлен на `ubuntu@90.156.213.217` в `/home/ubuntu/gastrogid`. Публичный Nginx принимает HTTPS на 443 с доверенным сертификатом Let’s Encrypt для IP; HTTP на 80 перенаправляет на HTTPS и обслуживает ACME challenge. Gateway слушает только `127.0.0.1:8080`, три сервиса и PostgreSQL доступны внутри Docker. Внутренние методы и service health/ready снаружи закрыты. Профиль, дневник и задания требуют JWT.
 
-Из этой рабочей копии откройте SSH-туннель и оставьте терминал запущенным:
-
-```sh
-ssh -i ../../work/server-key.pem \
-  -o StrictHostKeyChecking=yes \
-  -o UserKnownHostsFile=../../work/server_known_hosts \
-  -o ExitOnForwardFailure=yes \
-  -N -L 127.0.0.1:55080:127.0.0.1:8080 ubuntu@90.156.213.217
-```
-
-Ключ и known-hosts находятся вне репозитория. При другом расположении замените пути; `55080` можно заменить свободным локальным портом. Swagger через туннель: **http://127.0.0.1:55080/docs/**. Адрес API для iPhone Simulator на этом Mac: **http://127.0.0.1:55080/api/v1**. Физическому телефону нужен доступный сетевой адрес или VPN.
+Сертификат автоматически обновляется systemd timer каждые шесть часов; реальная проверка renewal с ACME staging и перезагрузка Nginx прошли. TLS ключи и ACME state хранятся в `/var/lib/gastrogid/tls` вне репозитория. Контейнеры имеют `restart: unless-stopped`, Docker и timer включены в автозапуск. Локальные контейнеры и SSH-туннель остановлены; внешний API и iOS проверены после их остановки.
 
 Секреты VPS созданы отдельно в `/home/ubuntu/gastrogid/.env`; загрузчик `scripts/deploy.sh` сохраняет этот файл и не копирует локальный `.env`. GLM Coding Plan с `glm-5.3-flash` подключён на VPS. Живые `dish_search`, `meal_plan` и проактивная рекомендация штатного scheduler прошли проверку цен, КБЖУ и источников. Admin trace подтверждает реальные вызовы специалистов. После изменения настроек провайдера нужно пересоздать recommendations.
 
 ```sh
-# На VPS, из /home/ubuntu/gastrogid:
-sudo docker compose up -d --force-recreate recommendations
-# На Mac, через работающий SSH-туннель:
-.venv/bin/python scripts/smoke.py --url http://127.0.0.1:55080 --agents
+# На VPS, из /home/ubuntu/gastrogid, после изменения настроек LLM:
+sudo docker compose -f compose.yaml -f compose.public.yaml \
+  up -d --no-deps --force-recreate recommendations
+# На Mac, напрямую через внешний HTTPS:
+.venv/bin/python scripts/smoke.py --url https://90.156.213.217 --public --agents
 # Полная проверка с настоящим scheduler персональной ленты:
-.venv/bin/python scripts/smoke.py --url http://127.0.0.1:55080 --agents --proactive
+.venv/bin/python scripts/smoke.py --url https://90.156.213.217 --public --agents --proactive
+```
+
+Для повторного развёртывания HTTPS на этом IP после загрузки исходников, настройки `.env` и запуска backend на VPS:
+
+```sh
+cd /home/ubuntu/gastrogid
+sudo install -d -m 700 /var/lib/gastrogid/tls/letsencrypt \
+  /var/lib/gastrogid/tls/work /var/lib/gastrogid/tls/logs
+sudo install -d -m 755 /var/lib/gastrogid/tls/webroot/.well-known/acme-challenge
+sudo env PUBLIC_NGINX_CONFIG=./infra/public/nginx-http.conf \
+  docker compose -f compose.yaml -f compose.public.yaml \
+  up -d --no-deps --force-recreate edge
+sudo docker compose -f compose.yaml -f compose.public.yaml pull certbot
+sudo docker compose -f compose.yaml -f compose.public.yaml \
+  run --rm --no-deps certbot certonly \
+  --non-interactive --agree-tos --register-unsafely-without-email \
+  --required-profile shortlived --webroot --webroot-path /var/www/certbot \
+  --ip-address 90.156.213.217 --cert-name gastrogid-public
+sudo docker compose -f compose.yaml -f compose.public.yaml \
+  up -d --no-deps --force-recreate gateway edge
+sudo install -d /usr/local/libexec
+sudo install -m 755 scripts/renew-public-tls.sh /usr/local/libexec/gastrogid-renew-public-tls
+sudo install -m 644 infra/public/gastrogid-tls-renew.service /etc/systemd/system/
+sudo install -m 644 infra/public/gastrogid-tls-renew.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now gastrogid-tls-renew.timer
+```
+
+Первичное получение сертификата требует доступа к порту 80. Bootstrap конфигурация обслуживает только ACME; HTTPS конфигурация включается последней командой Compose. Для другого IP замените адрес в конфигурациях Nginx, Certbot и iOS. При обновлении bind-mounted Nginx файлов пересоздайте `gateway edge`, чтобы контейнеры получили новые файлы.
+
+```sh
+# На VPS:
+sudo docker compose -f compose.yaml -f compose.public.yaml exec -T edge nginx -t
+sudo systemctl is-active gastrogid-tls-renew.timer
+sudo systemctl list-timers gastrogid-tls-renew.timer --no-pager
+sudo /usr/local/libexec/gastrogid-renew-public-tls --dry-run --run-deploy-hooks
+# Из внешней сети:
+curl --fail https://90.156.213.217/health
 ```
 
 ## Разделение системы
@@ -87,6 +118,7 @@ sudo docker compose up -d --force-recreate recommendations
 | Users & Nutrition, порт 8002 | Регистрация/JWT, предпочтения и аллергии, дневник со снимками, точная арифметика КБЖУ, обратная связь |
 | Recommendations, порт 8003 | LangGraph, долговечные задания, трассы агентов, персональная лента |
 | Gateway, порт 8080 | Единый REST API, Swagger, маршрутизация; внутренние методы не доступны извне |
+| Public edge, порты 80/443 | Доверенный HTTPS, ACME и ограничение публичных маршрутов |
 | PostgreSQL | Три базы и три сервисных пользователя; общая инфраструктура, раздельное владение данными |
 | SwiftUI | Вход, профиль, каталог, подбор, персональная лента и дневник |
 
@@ -123,7 +155,7 @@ OCR-тесты требуют Tesseract `rus+eng`; он уже установл�
 docker compose run --rm --no-deps -v "$PWD/tests:/app/tests:ro" catalog python -m pytest -q /app/tests/test_catalog.py
 ```
 
-Полный Xcode и iOS SDK нужны для сборки приложения и проверки Simulator/Keychain. Переносимый Foundation API пакет проверяется отдельно; синтаксическая проверка SwiftUI не заменяет полноценную сборку.
+Полная сборка SwiftUI в Xcode 27.0 и настоящий Foundation XCTest suite прошли: 10 тестов без ошибок. В подписанном iPhone 17 Simulator через внешний HTTPS проверены вход, профиль, каталог и evidence, дробная порция и дневник, реальный подбор GLM, отмена/возобновление без дубля и восстановление сессии из Keychain после перезапуска. Команды и фактические результаты приведены в `docs/VERIFICATION.md`.
 
 ## Команда из четырёх человек
 

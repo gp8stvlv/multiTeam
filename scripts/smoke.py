@@ -13,6 +13,7 @@ from dotenv import dotenv_values
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--url", default="http://127.0.0.1:8080")
+parser.add_argument("--public", action="store_true", help="Verify the public HTTPS gateway without private service health endpoints")
 parser.add_argument("--agents", action="store_true", help="Require and exercise the real configured LLM")
 parser.add_argument("--imports", action="store_true", help="Create an inactive integration restaurant and publish an HTML menu")
 parser.add_argument("--proactive", action="store_true", help="With --agents, verify the real scheduler-generated feed and disable opt-in afterward")
@@ -146,9 +147,18 @@ try:
     deadline = time.monotonic() + 60
     while True:
         try:
-            live = all(client.get(args.url.rstrip("/") + "/health/" + service).status_code == 200
-                       for service in ("catalog", "users", "recommendations"))
-        except httpx.HTTPError:
+            if args.public:
+                gateway = client.get(args.url.rstrip("/") + "/health")
+                schemas = [client.get(args.url.rstrip("/") + "/openapi/" + service + ".json")
+                           for service in ("catalog", "users", "recommendations")]
+                live = gateway.status_code == 200 and gateway.json().get("status") == "ok" and all(
+                    response.status_code == 200 and response.json().get("paths")
+                    for response in schemas
+                )
+            else:
+                live = all(client.get(args.url.rstrip("/") + "/health/" + service).status_code == 200
+                           for service in ("catalog", "users", "recommendations"))
+        except (httpx.HTTPError, ValueError):
             live = False
         if live:
             break
@@ -163,6 +173,10 @@ try:
     client.headers["Authorization"] = "Bearer " + smoke_token
     profile = call("GET", "/me/profile")
     assert profile["user_id"] == auth["user"]["id"]
+    if args.public:
+        # Exercise the recommendations service through its real owner-scoped
+        # public route without creating a model request or enabling the feed.
+        assert isinstance(call("GET", "/me/feed")["items"], list)
     restaurants = call("GET", "/restaurants")["items"]
     assert len(restaurants) >= 5
     menu = call("GET", f"/restaurants/{restaurants[0]['id']}/menu")
@@ -231,11 +245,12 @@ try:
             verify_ready_recommendation(result, budget_minor=100000, calorie_limit=2200)
             print("PASS real scheduler-generated live GLM proactive recommendation with confirmed origin and evidence")
     else:
-        health_response = client.get(args.url.rstrip("/") + "/health/recommendations")
-        assert health_response.status_code == 200, "Recommendations health check failed"
-        if not health_response.json()["llm_configured"]:
-            response = client.post("/recommendations", json={"mode": "dish_search", "query": "хинкали"}, headers={"Idempotency-Key": str(uuid4())})
-            assert response.status_code == 503 and response.json()["code"] == "llm_not_configured"
+        if not args.public:
+            health_response = client.get(args.url.rstrip("/") + "/health/recommendations")
+            assert health_response.status_code == 200, "Recommendations health check failed"
+            if not health_response.json()["llm_configured"]:
+                response = client.post("/recommendations", json={"mode": "dish_search", "query": "хинкали"}, headers={"Idempotency-Key": str(uuid4())})
+                assert response.status_code == 503 and response.json()["code"] == "llm_not_configured"
         print("SKIP live LLM inference (use --agents to exercise the configured provider)")
 
     if args.imports:

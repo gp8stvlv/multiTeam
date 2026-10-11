@@ -1,14 +1,21 @@
-%% Runtime components inspected against compose.yaml and service entrypoints.
+%% Runtime components inspected against compose.yaml, compose.public.yaml and service entrypoints.
 %% Solid arrows = local execution or SQL in one database boundary.
 %% Dashed arrows = HTTP calls across service boundaries; no cross-database SQL/FK.
 flowchart TB
     Mobile["SwiftUI iOS client<br/>URLSession; user JWT"]
     Admin["Admin API / Swagger UI<br/>admin JWT; menu import-review-publish"]
-    Gateway["Nginx API Gateway<br/>single API origin; static Swagger UI"]
+    Edge["Public Nginx :443<br/>https://90.156.213.217<br/>trusted TLS; public API routes only<br/>:80 ACME + redirect to HTTPS"]
+    Renewal["Certbot + systemd timer<br/>ACME renewal every 6 hours<br/>validated Nginx reload"]
+    TLSStore[("TLS keys and ACME state<br/>/var/lib/gastrogid/tls; outside Git")]
+    Gateway["Private Nginx API Gateway<br/>127.0.0.1:8080 on VPS<br/>REST routing; static Swagger UI"]
     LLM["GLM / OpenAI-compatible LLM API<br/>LLM_BASE_URL + LLM_MODEL + LLM_API_KEY<br/>required for live agents; no production fake fallback"]
 
-    Mobile --> Gateway
-    Admin --> Gateway
+    Mobile -.->|HTTPS| Edge
+    Admin -.->|HTTPS| Edge
+    Edge -.->|Docker HTTP| Gateway
+    Renewal --> TLSStore
+    Edge --> TLSStore
+    Renewal -->|reload| Edge
 
     subgraph CatalogBoundary["Catalog Service — owns catalog database"]
         CatalogAPI["FastAPI :8001<br/>restaurants, dishes, menu versions,<br/>sources and semantic search"]

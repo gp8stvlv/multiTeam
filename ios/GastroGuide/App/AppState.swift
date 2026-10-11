@@ -50,7 +50,7 @@ enum KeychainSession {
     private var token: String?
 
     init() {
-        baseURL = UserDefaults.standard.string(forKey: "gastro.api.baseURL") ?? "http://127.0.0.1:8080/api/v1"
+        baseURL = UserDefaults.standard.string(forKey: "gastro.api.baseURL") ?? "https://90.156.213.217/api/v1"
         restoreSession()
     }
     func client() throws -> APIClient { try APIClient(baseURL: baseURL, token: token) }
