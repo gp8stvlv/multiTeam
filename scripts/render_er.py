@@ -128,7 +128,7 @@ def make_dot():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=ROOT / "docs" / "er-runtime.svg")
+    parser.add_argument("--output", type=Path, default=ROOT / "docs" / "er.svg")
     parser.add_argument("--dot-output", type=Path, help="Optional Graphviz source output")
     args = parser.parse_args()
     source = make_dot()

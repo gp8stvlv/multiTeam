@@ -1,13 +1,29 @@
-"""Create local/server configuration without printing secrets or overwriting it."""
+"""Generate a private .env from the documented template without overwriting it."""
+import os
 from pathlib import Path
 import secrets
 
-target = Path(__file__).resolve().parents[1] / ".env"
-if target.exists():
-    raise SystemExit(".env already exists; edit it instead of replacing database secrets")
-template = (target.parent / ".env.example").read_text()
-for key in ("POSTGRES_PASSWORD", "AUTH_SECRET", "INTERNAL_TOKEN", "DEMO_ADMIN_PASSWORD"):
-    template = template.replace(key + "=\n", key + "=" + secrets.token_hex(32) + "\n")
-target.write_text(template)
-target.chmod(0o600)
-print("Created private .env. Set LLM_MODEL and LLM_API_KEY before live agent verification.")
+
+def configure(directory: Path) -> Path:
+    target = directory / ".env"
+    generated = {key: secrets.token_hex(32) for key in (
+        "POSTGRES_PASSWORD", "AUTH_SECRET", "INTERNAL_TOKEN", "DEMO_ADMIN_PASSWORD"
+    )}
+    # An example API key must never be treated as a configured LLM provider.
+    generated["LLM_API_KEY"] = ""
+    lines = []
+    for line in (directory / ".env.example").read_text().splitlines():
+        key = line.partition("=")[0]
+        lines.append(f"{key}={generated[key]}" if key in generated else line)
+    descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, "w") as output:
+        output.write("\n".join(lines) + "\n")
+    return target
+
+
+if __name__ == "__main__":
+    try:
+        configure(Path(__file__).resolve().parents[1])
+    except FileExistsError:
+        raise SystemExit(".env already exists; edit it instead of replacing database secrets")
+    print("Created private .env. Set LLM_API_KEY to enable live recommendations.")

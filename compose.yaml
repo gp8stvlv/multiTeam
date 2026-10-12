@@ -42,10 +42,8 @@ services:
       <<: *environment
       SERVICE_PORT: "8001"
       CATALOG_DATABASE_URL: postgresql+psycopg://catalog:${POSTGRES_PASSWORD}@postgres:5432/catalog
-      CATALOG_DATA_DIR: /app/data/catalog
       CATALOG_MODEL_CACHE: /app/model-cache
     volumes:
-      - catalog-data:/app/data
       - model-cache:/app/model-cache
   users:
     <<: *backend
@@ -80,5 +78,4 @@ services:
         condition: service_healthy
 volumes:
   postgres-data:
-  catalog-data:
   model-cache:
