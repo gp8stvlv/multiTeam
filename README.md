@@ -86,7 +86,7 @@ python3.12 -m venv .venv
 
 На защите: задать профиль → запросить хинкали с бюджетом → показать цену, КБЖУ и источник → записать половину порции → открыть дневной итог. Через Swagger администратор может показать импорт меню и `/recommendations/{id}/trace`.
 
-Пройдены 76 backend-тестов с настоящими MiniLM и Tesseract, полная сборка iOS Simulator и 10 XCTest. Сценарий приложения с настоящим GLM также проверен. API-тесты iOS: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun swift test --package-path ios/GastroAPI`. Физический iPhone, карта, push, доставка и оплата не входят в проверенный MVP.
+Пройдены 76 backend-тестов с настоящими MiniLM и Tesseract, полная сборка iOS Simulator и 10 XCTest. Сборка и тесты iOS также проходят в [GitHub Actions](https://github.com/gp8stvlv/multiTeam/actions/workflows/ios-build.yml). Сценарий приложения с настоящим GLM проверен. API-тесты iOS: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun swift test --package-path ios/GastroAPI`. Физический iPhone, карта, push, доставка и оплата не входят в проверенный MVP.
 
 ## Структура и документация
 
