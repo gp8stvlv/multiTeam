@@ -2,7 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ГастроГид — Recommendations",
-    "version": "0.1.0"
+    "version": "0.1.0",
+    "description": "Публичный HTTPS gateway требует общий X-API-Key. Для защищённых операций он передаётся вместе с пользовательским Bearer JWT; регистрация и вход требуют только X-API-Key. Локальный и внутренний доступ не требуют этого ключа."
   },
   "paths": {
     "/health": {
@@ -46,7 +47,8 @@
         "operationId": "create_recommendation_api_v1_recommendations_post",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -135,7 +137,8 @@
         "operationId": "get_recommendation_api_v1_recommendations__recommendation_id__get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -213,7 +216,8 @@
         "operationId": "get_trace_api_v1_recommendations__recommendation_id__trace_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -291,7 +295,8 @@
         "operationId": "get_feed_api_v1_me_feed_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -382,7 +387,8 @@
         "operationId": "patch_feed_api_v1_me_feed__feed_item_id__patch",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -1531,6 +1537,12 @@
       "HTTPBearer": {
         "type": "http",
         "scheme": "bearer"
+      },
+      "TeamAPIKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Публичный HTTPS gateway требует общий X-API-Key. Для защищённых операций он передаётся вместе с пользовательским Bearer JWT; регистрация и вход требуют только X-API-Key. Локальный и внутренний доступ не требуют этого ключа."
       }
     }
   }

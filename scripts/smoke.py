@@ -2,6 +2,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 import argparse
+import os
 from pathlib import Path
 import secrets
 import sys
@@ -10,6 +11,20 @@ from uuid import uuid4
 from zoneinfo import ZoneInfo
 import httpx
 from dotenv import dotenv_values
+
+
+def gateway_headers(settings, environment=None):
+    environment = os.environ if environment is None else environment
+    key = environment.get("GASTRO_API_KEY", settings.get("GASTRO_API_KEY") or "")
+    if key and (not isinstance(key, str) or any(ord(char) < 33 or ord(char) > 126 for char in key)):
+        raise ValueError("GASTRO_API_KEY must be a single ASCII header value")
+    return {"X-API-Key": key} if key else {}
+
+
+def require_gateway_access(response):
+    if response.status_code == 403:
+        raise AssertionError("Public gateway rejected X-API-Key (HTTP 403); set a valid GASTRO_API_KEY")
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--url", default="http://127.0.0.1:8080")
@@ -24,7 +39,7 @@ if args.proactive and not args.agents:
 if args.proactive_timeout < 1:
     parser.error("--proactive-timeout must be positive")
 settings = dotenv_values(Path(__file__).resolve().parents[1] / ".env")
-client = httpx.Client(base_url=args.url.rstrip("/") + "/api/v1", timeout=60)
+client = httpx.Client(base_url=args.url.rstrip("/") + "/api/v1", timeout=60, headers=gateway_headers(settings))
 smoke_token = None
 smoke_email = None
 smoke_password = None
@@ -149,8 +164,12 @@ try:
         try:
             if args.public:
                 gateway = client.get(args.url.rstrip("/") + "/health")
-                schemas = [client.get(args.url.rstrip("/") + "/openapi/" + service + ".json")
-                           for service in ("catalog", "users", "recommendations")]
+                require_gateway_access(gateway)
+                schemas = []
+                for service in ("catalog", "users", "recommendations"):
+                    schema_response = client.get(args.url.rstrip("/") + "/openapi/" + service + ".json")
+                    require_gateway_access(schema_response)
+                    schemas.append(schema_response)
                 live = gateway.status_code == 200 and gateway.json().get("status") == "ok" and all(
                     response.status_code == 200 and response.json().get("paths")
                     for response in schemas

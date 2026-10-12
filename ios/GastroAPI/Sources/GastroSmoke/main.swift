@@ -8,11 +8,12 @@ import GastroAPI
             exit(2)
         }
         do {
-            let unauthenticated = try APIClient(baseURL: baseURL)
+            let apiKey = ProcessInfo.processInfo.environment["GASTRO_API_KEY"]
+            let unauthenticated = try APIClient(baseURL: baseURL, apiKey: apiKey)
             let unique = UUID().uuidString.lowercased()
             let auth = try await unauthenticated.authenticate(email: "swift-smoke-\(unique)@example.test",
                                                              password: UUID().uuidString + "-a9", register: true)
-            let client = try APIClient(baseURL: baseURL, token: auth.accessToken)
+            let client = try APIClient(baseURL: baseURL, token: auth.accessToken, apiKey: apiKey)
             let profile = try await client.profile()
             let restaurants = try await client.restaurants()
             guard let restaurant = restaurants.items.first else { throw APIClientError.invalidInput("No seeded restaurants") }

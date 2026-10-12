@@ -55,7 +55,9 @@ docker compose up --build -d
 
 ## Мобильное приложение
 
-Откройте `ios/GastroGuide/GastroGuide.xcodeproj` в Xcode 15+ и запустите схему **GastroGuide** на iPhone Simulator. Для локального backend задайте `http://127.0.0.1:8080/api/v1` через «Изменить адрес API» на экране входа. JWT сохраняется в Keychain.
+Откройте `ios/GastroGuide/GastroGuide.xcodeproj` в Xcode 15+ и запустите схему **GastroGuide** на iPhone Simulator. В настройках подключения укажите адрес API и общий API-токен команды. Для локального backend используйте `http://127.0.0.1:8080/api/v1` без общего токена. API-токен и JWT сохраняются в Keychain отдельно для каждого сервера.
+
+Внешний адрес — `https://90.156.213.217/api/v1`. Публичный gateway требует `X-API-Key` для всех API-запросов, включая регистрацию и вход. Swagger доступен на `https://90.156.213.217/docs/`: HTTP Basic username — `team`, пароль — общий API-токен; для вызовов API укажите его также в **Authorize → TeamAPIKey**.
 
 ## Тестирование
 
@@ -80,7 +82,7 @@ python3.12 -m venv .venv
 .venv/bin/python scripts/smoke.py --agents
 ```
 
-Для внешнего сервера добавьте `--url https://90.156.213.217 --public`. Флаг `--imports` проверяет HTML-импорт, `--proactive` вместе с `--agents` ждёт scheduler персональной ленты. Unit-тесты используют модели и HTTP mocks; smoke с `--agents` вызывает LLM-провайдер.
+Для внешнего сервера задайте `GASTRO_API_KEY` в окружении и добавьте `--url https://90.156.213.217 --public`. Флаг `--imports` проверяет HTML-импорт, `--proactive` вместе с `--agents` ждёт scheduler персональной ленты. Unit-тесты используют модели и HTTP mocks; smoke с `--agents` вызывает LLM-провайдер.
 
 ## Структура и документация
 

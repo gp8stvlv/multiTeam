@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 
 from services.common.db import make_database
 from services.common.errors import install_error_handlers
+from services.common.openapi import install_gateway_security_schema
 from services.common.security import Principal, current_user, require_admin
 
 from .core import CatalogWorker, initialize, item_view, menu_view, publish, replace_draft, restaurant_view, semantic_search
@@ -67,6 +68,7 @@ def create_app(database=None, encoder=None, profile_loader=None, *, seed=True, s
     application = FastAPI(title="ГастроГид: Catalog Service", version="0.1.0", lifespan=lifespan,
         description="Versioned menus, reviewable HTML/PDF/photo imports and real multilingual semantic retrieval. Demo data is explicitly synthetic.")
     install_error_handlers(application)
+    install_gateway_security_schema(application)
 
     def get_session():
         with session_factory() as session:

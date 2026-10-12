@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from services.common.db import make_database
 from services.common.errors import install_error_handlers
+from services.common.openapi import install_gateway_security_schema
 from services.common.security import Principal, auth_secret, create_access_token, current_user, require_internal
 
 from .models import (
@@ -154,6 +155,7 @@ def create_app() -> FastAPI:
     application.state.catalog_transport = None
     application.state.recommendations_transport = None
     install_error_handlers(application)
+    install_gateway_security_schema(application)
 
     def session():
         with session_factory() as db:

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ГастроГид — User & Nutrition Service",
-    "description": "Accounts, explicit preferences, immutable food snapshots and exact nutrition arithmetic.",
+    "description": "Accounts, explicit preferences, immutable food snapshots and exact nutrition arithmetic.\n\nПубличный HTTPS gateway требует общий X-API-Key. Для защищённых операций он передаётся вместе с пользовательским Bearer JWT; регистрация и вход требуют только X-API-Key. Локальный и внутренний доступ не требуют этого ключа.",
     "version": "0.1.0"
   },
   "paths": {
@@ -92,7 +92,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "TeamAPIKey": []
+          }
+        ]
       }
     },
     "/api/v1/auth/login": {
@@ -143,7 +148,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "TeamAPIKey": []
+          }
+        ]
       }
     },
     "/api/v1/me/profile": {
@@ -207,7 +217,8 @@
         },
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ]
       },
@@ -281,7 +292,8 @@
         },
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ]
       }
@@ -295,7 +307,8 @@
         "operationId": "calculate_api_v1_nutrition_calculate_post",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -382,7 +395,8 @@
         "operationId": "list_diary_api_v1_me_diary_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -481,7 +495,8 @@
         "operationId": "create_diary_api_v1_me_diary_post",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -594,7 +609,8 @@
         "operationId": "patch_diary_api_v1_me_diary__entry_id__patch",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -680,7 +696,8 @@
         "operationId": "delete_diary_api_v1_me_diary__entry_id__delete",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -751,7 +768,8 @@
         "operationId": "daily_summary_api_v1_me_daily_summary_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -829,7 +847,8 @@
         "operationId": "list_feedback_api_v1_me_feedback_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -907,7 +926,8 @@
         "operationId": "set_feedback_api_v1_me_feedback_post",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -2660,6 +2680,12 @@
       "HTTPBearer": {
         "type": "http",
         "scheme": "bearer"
+      },
+      "TeamAPIKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Публичный HTTPS gateway требует общий X-API-Key. Для защищённых операций он передаётся вместе с пользовательским Bearer JWT; регистрация и вход требуют только X-API-Key. Локальный и внутренний доступ не требуют этого ключа."
       }
     }
   }

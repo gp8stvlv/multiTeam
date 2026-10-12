@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ГастроГид: Catalog Service",
-    "description": "Versioned menus, reviewable HTML/PDF/photo imports and real multilingual semantic retrieval. Demo data is explicitly synthetic.",
+    "description": "Versioned menus, reviewable HTML/PDF/photo imports and real multilingual semantic retrieval. Demo data is explicitly synthetic.\n\nПубличный HTTPS gateway требует общий X-API-Key. Для защищённых операций он передаётся вместе с пользовательским Bearer JWT; регистрация и вход требуют только X-API-Key. Локальный и внутренний доступ не требуют этого ключа.",
     "version": "0.1.0"
   },
   "paths": {
@@ -53,7 +53,8 @@
         "operationId": "list_restaurants_api_v1_restaurants_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -223,7 +224,8 @@
         "operationId": "create_restaurant_api_v1_restaurants_post",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "requestBody": {
@@ -299,7 +301,8 @@
         "operationId": "get_restaurant_api_v1_restaurants__restaurant_id__get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -375,7 +378,8 @@
         "operationId": "patch_restaurant_api_v1_restaurants__restaurant_id__patch",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -463,7 +467,8 @@
         "operationId": "active_menu_api_v1_restaurants__restaurant_id__menu_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -541,7 +546,8 @@
         "operationId": "reviews_api_v1_restaurants__restaurant_id__reviews_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -642,7 +648,8 @@
         "operationId": "dish_api_v1_dishes__dish_id__get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -720,7 +727,8 @@
         "operationId": "menu_item_api_v1_menu_items__menu_item_id__get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -798,7 +806,8 @@
         "operationId": "menu_version_api_v1_menu_versions__menu_version_id__get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -876,7 +885,8 @@
         "operationId": "evidence_api_v1_evidence__evidence_id__get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -954,7 +964,8 @@
         "operationId": "evidence_source_api_v1_evidence__evidence_id__source_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -1025,7 +1036,8 @@
         "operationId": "search_api_v1_search_post",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -1181,7 +1193,8 @@
         },
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ]
       }
@@ -1195,7 +1208,8 @@
         "operationId": "get_import_api_v1_menu_imports__import_id__get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -1273,7 +1287,8 @@
         "operationId": "get_draft_api_v1_menu_imports__import_id__draft_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -1349,7 +1364,8 @@
         "operationId": "edit_draft_api_v1_menu_imports__import_id__draft_put",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -1437,7 +1453,8 @@
         "operationId": "import_evidence_api_v1_menu_imports__import_id__evidence_get",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -1519,7 +1536,8 @@
         "operationId": "publish_menu_api_v1_menu_imports__import_id__publish_post",
         "security": [
           {
-            "HTTPBearer": []
+            "HTTPBearer": [],
+            "TeamAPIKey": []
           }
         ],
         "parameters": [
@@ -3151,6 +3169,12 @@
       "HTTPBearer": {
         "type": "http",
         "scheme": "bearer"
+      },
+      "TeamAPIKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Публичный HTTPS gateway требует общий X-API-Key. Для защищённых операций он передаётся вместе с пользовательским Bearer JWT; регистрация и вход требуют только X-API-Key. Локальный и внутренний доступ не требуют этого ключа."
       }
     }
   }

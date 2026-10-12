@@ -12,6 +12,12 @@
 
 ## Авторизация
 
+Публичный gateway требует общий токен команды в заголовке `X-API-Key`, в том числе для регистрации и входа. В iOS токен задаётся рядом с адресом сервера. Запрос с отсутствующим или неверным токеном получает `403` до обращения к backend.
+
+Для открытия Swagger в браузере используйте HTTP Basic: username `team`, пароль — общий токен. В **Authorize → TeamAPIKey** укажите токен для API-запросов. Локальный Docker gateway не требует общего токена.
+
+Токен создаётся на VPS вне репозитория: `sudo python3 scripts/configure-public-access.py`. После настройки TLS используется `docker compose -f compose.yaml -f compose.public.yaml up -d --build`. Повторный запуск генератора сохраняет ключ; `--rotate` меняет его и требует перезагрузки edge. Секрет не входит в образы или Git.
+
 `POST /auth/register` и `POST /auth/login` возвращают `access_token`. В Swagger нажмите **Authorize** и вставьте JWT; HTTP-клиент передаёт `Authorization: Bearer <token>`.
 
 Импорт меню, управление каталогом и чтение трасс доступны администратору. Его email и сгенерированный пароль находятся в вашем `.env`. Изменение пароля в `.env` не меняет уже созданный аккаунт. Внутренние межсервисные методы закрыты на gateway.
@@ -20,6 +26,7 @@
 
 ```http
 POST /api/v1/recommendations
+X-API-Key: <team-api-token>
 Authorization: Bearer <token>
 Idempotency-Key: <unique-request-key>
 Content-Type: application/json
@@ -37,4 +44,4 @@ Content-Type: application/json
 
 Администратор загружает файл через `POST /menu-imports` (`restaurant_id`, `source_kind=html|pdf|image`, `file`). Затем читает статус → проверяет `/draft` и `/evidence` → исправляет черновик через `PUT /draft` → публикует через `POST /publish`. Изменение и публикация требуют текущий `expected_revision`; устаревший номер возвращает `409`. Исходные фрагменты сохраняются, версии меню неизменяемы.
 
-Ошибки имеют единую схему `{code, message, request_id, details}`. `401` означает отсутствие действующего JWT, `403` — недостаточные права, `503` — неготовую модель или недоступную зависимость.
+Ошибки имеют единую схему `{code, message, request_id, details}`. `401` означает отсутствие действующего JWT, `403` — неверный общий API-токен или недостаточные права, `503` — неготовую модель или недоступную зависимость.

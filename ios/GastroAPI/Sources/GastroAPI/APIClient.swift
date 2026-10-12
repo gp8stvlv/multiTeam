@@ -15,6 +15,9 @@ public enum APIClientError: Error, LocalizedError, Sendable {
         case .invalidURL: return "Укажите HTTP(S) адрес API, например http://127.0.0.1:8080/api/v1."
         case .invalidResponse: return "Сервер вернул неожиданный ответ."
         case .http(let status, let error):
+            if status == 403, ["invalid_api_key", "api_key_required"].contains(error?.code ?? "") {
+                return "Проверьте API-токен в настройках подключения"
+            }
             if status == 401 { return "Сессия истекла. Войдите заново." }
             return error.map { "\($0.message)" } ?? "Ошибка сервера (\(status))."
         case .timeout: return "Подбор ещё выполняется. Проверьте результат повторно."
@@ -25,6 +28,12 @@ public enum APIClientError: Error, LocalizedError, Sendable {
         if case .http(let status, _) = self { return status == 401 }
         return false
     }
+    public var isAPIKeyRejected: Bool {
+        if case .http(let status, let error) = self {
+            return status == 403 && ["invalid_api_key", "api_key_required"].contains(error?.code ?? "")
+        }
+        return false
+    }
 }
 
 public struct RecommendationSubmission: Sendable {
@@ -32,19 +41,27 @@ public struct RecommendationSubmission: Sendable {
     public let retryAfter: TimeInterval
 }
 
-/// Immutable client. Construct a new instance when the base URL or JWT changes.
+/// Immutable client. Construct a new instance when the URL, JWT or API key changes.
 public final class APIClient: @unchecked Sendable {
     public let baseURL: URL
     private let token: String?
+    private let apiKey: String?
     private let session: URLSession
 
-    public init(baseURL: String, token: String? = nil, session: URLSession = URLSession(configuration: .ephemeral)) throws {
+    public init(baseURL: String, token: String? = nil, apiKey: String? = nil,
+                session: URLSession = URLSession(configuration: .ephemeral)) throws {
         guard let components = URLComponents(string: baseURL.trimmingCharacters(in: .whitespacesAndNewlines)),
               ["http", "https"].contains(components.scheme?.lowercased() ?? ""),
               components.host != nil, components.user == nil, components.password == nil,
               components.query == nil, components.fragment == nil,
               let url = components.url else { throw APIClientError.invalidURL }
-        self.baseURL = url; self.token = token; self.session = session
+        let normalizedKey = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let normalizedKey, normalizedKey.rangeOfCharacter(from: .controlCharacters) != nil {
+            throw APIClientError.invalidInput("API-токен содержит недопустимые символы.")
+        }
+        self.baseURL = url; self.token = token
+        self.apiKey = normalizedKey?.isEmpty == false ? normalizedKey : nil
+        self.session = session
     }
 
     public static func decoder() -> JSONDecoder {
@@ -68,6 +85,7 @@ public final class APIClient: @unchecked Sendable {
         request.httpMethod = method
         request.timeoutInterval = 35
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let apiKey { request.setValue(apiKey, forHTTPHeaderField: "X-API-Key") }
         if let body {
             request.httpBody = body
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -135,6 +153,7 @@ public final class APIClient: @unchecked Sendable {
         // DELETE commonly returns 204; it has no response body to decode.
         let url = baseURL.appendingPathComponent("me/diary/\(id)")
         var request = URLRequest(url: url); request.httpMethod = "DELETE"; request.timeoutInterval = 35
+        if let apiKey { request.setValue(apiKey, forHTTPHeaderField: "X-API-Key") }
         if let token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
         let (data, response) = try await session.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw APIClientError.invalidResponse }

@@ -13,6 +13,9 @@ services:
       - ${PUBLIC_NGINX_CONFIG:-./infra/public/nginx-https.conf}:/etc/nginx/conf.d/default.conf:ro
       - /var/lib/gastrogid/tls/webroot:/var/www/certbot:ro
       - /var/lib/gastrogid/tls/letsencrypt:/etc/letsencrypt:ro
+      # The host parent is 0700; this child mount permits workers to read the
+      # password hash while only the root master can read the 0600 API map.
+      - ${PUBLIC_ACCESS_DIRECTORY:-/var/lib/gastrogid/access}/nginx:/etc/gastrogid:ro
     depends_on:
       gateway:
         condition: service_started

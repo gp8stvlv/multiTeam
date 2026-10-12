@@ -35,27 +35,38 @@ enum KeychainSession {
         } else if updated != errSecSuccess { throw KeychainFailure(status: updated) }
     }
     static func delete(account: String) { SecItemDelete(query(account: account) as CFDictionary) }
+    static func deleteIfPresent(account: String) throws {
+        let status = SecItemDelete(query(account: account) as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else { throw KeychainFailure(status: status) }
+    }
     struct KeychainFailure: LocalizedError {
         let status: OSStatus
-        var errorDescription: String? { "Не удалось сохранить сессию в Keychain (\(status))." }
+        var errorDescription: String? { "Не удалось сохранить данные подключения в Keychain (\(status))." }
     }
 }
 
 @MainActor final class AppState: ObservableObject {
     @Published private(set) var isAuthenticated = false
     @Published private(set) var baseURL: String
+    @Published private(set) var apiKey = ""
     @Published var sessionMessage: String?
     @Published var diaryRevision = 0
     @Published private(set) var timezone = TimeZone.current.identifier
+    private(set) var configurationRevision = UUID()
     private var token: String?
 
     init() {
-        baseURL = UserDefaults.standard.string(forKey: "gastro.api.baseURL") ?? "https://90.156.213.217/api/v1"
+        let savedURL = UserDefaults.standard.string(forKey: "gastro.api.baseURL") ?? "https://90.156.213.217/api/v1"
+        let validatedURL = (try? APIClient(baseURL: savedURL))?.baseURL.absoluteString ?? "https://90.156.213.217/api/v1"
+        baseURL = validatedURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        apiKey = storedAPIKey(for: baseURL)
         restoreSession()
     }
-    func client() throws -> APIClient { try APIClient(baseURL: baseURL, token: token) }
-    func save(auth: AuthResponse, serverURL: String) throws {
-        guard serverURL == baseURL else { throw APIClientError.invalidInput("Сервер изменился во время входа. Повторите вход.") }
+    func client() throws -> APIClient { try APIClient(baseURL: baseURL, token: token, apiKey: apiKey) }
+    func save(auth: AuthResponse, configurationRevision expectedRevision: UUID) throws {
+        guard expectedRevision == configurationRevision else {
+            throw APIClientError.invalidInput("Настройки подключения изменились во время входа. Повторите вход.")
+        }
         let saved = SavedSession(token: auth.accessToken, expiresAt: Date().addingTimeInterval(Double(auth.expiresIn)))
         try KeychainSession.save(JSONEncoder().encode(saved), account: baseURL)
         token = saved.token; isAuthenticated = true; sessionMessage = nil
@@ -70,18 +81,32 @@ enum KeychainSession {
         token = saved.token; isAuthenticated = true
     }
     func logout() {
+        configurationRevision = UUID()
         KeychainSession.delete(account: baseURL)
         token = nil; isAuthenticated = false
         timezone = TimeZone.current.identifier
     }
-    func setBaseURL(_ value: String) throws {
-        let validated = try APIClient(baseURL: value)
+    func storedAPIKey(for value: String) -> String {
+        guard let validated = try? APIClient(baseURL: value) else { return "" }
         let normalized = validated.baseURL.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        guard normalized != baseURL else { return }
-        logout()
+        guard let data = KeychainSession.read(account: "api-key:\(normalized)") else { return "" }
+        return String(data: data, encoding: .utf8) ?? ""
+    }
+    func setServerSettings(baseURL value: String, apiKey valueKey: String) throws {
+        let normalizedKey = valueKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let validated = try APIClient(baseURL: value, apiKey: normalizedKey)
+        let normalized = validated.baseURL.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard normalized != baseURL || normalizedKey != apiKey else { return }
+        let keyAccount = "api-key:\(normalized)"
+        if normalizedKey.isEmpty { try KeychainSession.deleteIfPresent(account: keyAccount) }
+        else { try KeychainSession.save(Data(normalizedKey.utf8), account: keyAccount) }
+        let serverChanged = normalized != baseURL
+        if serverChanged { logout() }
+        configurationRevision = UUID()
         baseURL = normalized
+        apiKey = normalizedKey
         UserDefaults.standard.set(normalized, forKey: "gastro.api.baseURL")
-        sessionMessage = "Адрес API изменён. Войдите на выбранном сервере."
+        sessionMessage = serverChanged ? "Адрес API изменён. Войдите на выбранном сервере." : nil
     }
     func received(profile: Profile) { timezone = profile.timezone }
     func report(_ error: Error) -> String {

@@ -14,6 +14,7 @@ from sqlalchemy import select, update, func, text
 from sqlalchemy.exc import IntegrityError
 from services.common.db import make_database
 from services.common.errors import install_error_handlers
+from services.common.openapi import install_gateway_security_schema
 from services.common.security import Principal, current_user, require_admin, create_access_token, auth_secret
 from services.recommendations.models import Base, RequestRow, TraceRow, FeedRow, now
 from services.recommendations.schemas import RecommendationCreate, RecommendationRun, RecommendationResult, TraceResponse, FeedPage, FeedItem, FeedPatch
@@ -219,6 +220,7 @@ async def lifespan(app):
 
 app = FastAPI(title="ГастроГид — Recommendations", version="0.1.0", lifespan=lifespan)
 install_error_handlers(app)
+install_gateway_security_schema(app)
 
 
 @app.get("/health")

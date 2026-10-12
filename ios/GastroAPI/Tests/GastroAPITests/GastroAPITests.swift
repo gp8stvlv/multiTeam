@@ -35,10 +35,11 @@ final class GastroAPITests: XCTestCase {
             data.append(contentsOf: buffer.prefix(count))
         }
     }
-    private func client(token: String? = "sample-test-token") throws -> APIClient {
+    private func client(token: String? = "sample-test-token", apiKey: String? = nil) throws -> APIClient {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [StubProtocol.self]
-        return try APIClient(baseURL: "https://example.test/api/v1", token: token, session: URLSession(configuration: config))
+        return try APIClient(baseURL: "https://example.test/api/v1", token: token, apiKey: apiKey,
+                             session: URLSession(configuration: config))
     }
     override func tearDown() { StubProtocol.handler = nil; super.tearDown() }
 
@@ -160,6 +161,88 @@ final class GastroAPITests: XCTestCase {
         }
         try await client().deleteDiary(id: "d")
     }
+
+    func testPlatformAPIKeyStaysInHeaderAcrossAuthGetPostPatchAndDelete() async throws {
+        let apiKey = "shared-platform-test-key"
+        var requests: [String] = []
+        StubProtocol.handler = { request in
+            let path = try XCTUnwrap(request.url?.path)
+            requests.append("\(request.httpMethod ?? "") \(path)")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "X-API-Key"), apiKey)
+            XCTAssertFalse(request.url?.absoluteString.contains(apiKey) ?? true)
+            let queryNames = URLComponents(url: try XCTUnwrap(request.url), resolvingAgainstBaseURL: false)?.queryItems?.map(\.name) ?? []
+            XCTAssertTrue(Set(queryNames).isDisjoint(with: ["api_key", "apiKey", "token"]))
+            if request.httpBody != nil || request.httpBodyStream != nil {
+                XCTAssertFalse(String(decoding: try Self.bodyData(request), as: UTF8.self).contains(apiKey))
+            }
+            if path.hasPrefix("/api/v1/auth/") {
+                XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+                return (200, [:], Data("""
+                {"access_token":"new-token","token_type":"bearer","expires_in":3600,
+                 "user":{"id":"u","email":"test@example.test","role":"user"}}
+                """.utf8))
+            }
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer sample-test-token")
+            if path == "/api/v1/me/profile" { return (200, [:], Self.profileData) }
+            if path == "/api/v1/recommendations" {
+                return (202, [:], Data("{\"id\":\"r\",\"status\":\"queued\",\"trigger\":\"manual\"}".utf8))
+            }
+            if path == "/api/v1/me/diary/d" { return (204, [:], Data()) }
+            throw URLError(.badURL)
+        }
+        let client = try client(apiKey: apiKey)
+        _ = try await client.authenticate(email: "test@example.test", password: "test-password", register: false)
+        _ = try await client.authenticate(email: "test@example.test", password: "test-password", register: true)
+        _ = try await client.profile()
+        _ = try await client.updateProfile(.init(timezone: "Europe/Moscow", favoriteCuisines: [], dislikedIngredients: [],
+                                                 spicePreference: "any", allergies: [], dailyCaloriesTarget: nil,
+                                                 defaultBudgetMinor: nil, proactiveEnabled: false))
+        _ = try await client.createRecommendation(.init(query: "хинкали"), idempotencyKey: "run-key")
+        try await client.deleteDiary(id: "d")
+        XCTAssertEqual(requests, ["POST /api/v1/auth/login", "POST /api/v1/auth/register", "GET /api/v1/me/profile",
+                                  "PATCH /api/v1/me/profile", "POST /api/v1/recommendations", "DELETE /api/v1/me/diary/d"])
+    }
+
+    func testPlatformKeyRejectionIsDistinctFromJWTExpiration() async throws {
+        for code in ["invalid_api_key", "api_key_required"] {
+            var calls = 0
+            StubProtocol.handler = { request in
+                calls += 1
+                XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer sample-test-token")
+                if calls == 1 {
+                    return (403, [:], Data("{\"code\":\"\(code)\",\"message\":\"platform access denied\",\"request_id\":\"q\"}".utf8))
+                }
+                return (200, [:], Self.profileData)
+            }
+            let client = try client(apiKey: "wrong-platform-test-key")
+            do { _ = try await client.profile(); XCTFail("Expected platform key rejection") }
+            catch let error as APIClientError {
+                XCTAssertTrue(error.isAPIKeyRejected)
+                XCTAssertFalse(error.isUnauthorized)
+                XCTAssertEqual(error.localizedDescription, "Проверьте API-токен в настройках подключения")
+            }
+            _ = try await client.profile()
+            XCTAssertEqual(calls, 2)
+        }
+    }
+
+    func testAPIKeyCanBeOmittedForLocalServer() async throws {
+        StubProtocol.handler = { request in
+            XCTAssertNil(request.value(forHTTPHeaderField: "X-API-Key"))
+            return (200, [:], Self.profileData)
+        }
+        _ = try await client().profile()
+    }
+
+    func testAPIKeyCannotInjectHeaderLines() {
+        XCTAssertThrowsError(try APIClient(baseURL: "https://example.test/api/v1", apiKey: "test-key\r\nInjected: value"))
+    }
+
+    private static let profileData = Data("""
+    {"user_id":"u","timezone":"Europe/Moscow","favorite_cuisines":[],"disliked_ingredients":[],
+     "spice_preference":"any","allergies":[],"daily_calories_target":null,"default_budget_minor":null,
+     "currency":"RUB","proactive_enabled":false}
+    """.utf8)
 
     private static let diaryData = Data("""
     {"id":"d","consumed_at":"2026-10-11T12:00:00Z","portions":"0.5","note":null,
