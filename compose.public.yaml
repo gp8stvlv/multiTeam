@@ -1,5 +1,3 @@
-# Add to compose.yaml on the VPS: docker compose -f compose.yaml -f compose.public.yaml up -d edge
-# Application ports remain on loopback; only this TLS gateway is exposed.
 services:
   gateway:
     # Keep the application gateway private even if HTTP_BIND is changed in .env.

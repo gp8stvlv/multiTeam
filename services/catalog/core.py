@@ -64,7 +64,7 @@ def import_warnings(items):
 
 
 def process_import(session_factory, import_id):
-    # Status and input persist across process restarts. Expensive extraction outside transaction.
+    # Extract outside the transaction; persisted status allows restart recovery.
     with session_factory() as session:
         job = session.get(ImportRow, import_id)
         if job is None or job.status != "queued":
@@ -156,7 +156,7 @@ def publish(session, import_id, expected_revision, encoder):
     existing_ids = [str(x.existing_dish_id) for x in items if x.existing_dish_id]
     if len(existing_ids) != len(set(existing_ids)):
         raise HTTPException(422, "A dish may appear only once in a menu version")
-    # Compute real vectors BEFORE making any published data visible.
+    # Encode before publishing so model failures cannot expose an incomplete menu.
     try:
         vectors = encoder.encode([" ".join([x.name, x.description or "", " ".join(x.ingredients), " ".join(x.tags)]) for x in items])
     except Exception as exc:
@@ -265,9 +265,7 @@ def semantic_search(session, data, encoder):
     rows = list(session.execute(statement).all())
     if session.bind.dialect.name != "postgresql":
         rows.sort(key=lambda pair: cosine(pair[0].embedding, query_vector), reverse=True)
-    # All candidates have real model vectors. SQL still executes cosine ordering;
-    # explicit food-name/tag matches are a separately reported reranking signal.
-    # This is deliberately after vector retrieval, never an encoder-failure path.
+    # Rerank model-derived candidates; report lexical bonuses separately from cosine.
     ranked = []
     for item, restaurant in rows:
         if filter_item(item, restaurant, data.constraints):

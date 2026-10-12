@@ -207,7 +207,6 @@ def create_app() -> FastAPI:
             item = CatalogMenuItem.model_validate(data)
             if item.id != item_id or item.price_minor < 0:
                 raise ValueError("Invalid menu item identity or price")
-            # Validate the copied, public snapshot shape too.
             item_snapshot(item)
             return item
         except (ValidationError, ValueError) as exc:

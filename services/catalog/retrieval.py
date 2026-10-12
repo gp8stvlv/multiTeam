@@ -1,9 +1,4 @@
-"""Transparent hybrid reranking of model-derived cosine candidates.
-
-Lexical signals supplement the real model; they are never a substitute for an
-unavailable encoder or an unindexed menu. Numeric/allergen filtering still runs
-independently and before result selection.
-"""
+"""Hybrid reranking of model-derived candidates; no encoder fallback."""
 from __future__ import annotations
 
 import re

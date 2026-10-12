@@ -49,7 +49,7 @@ def message(name, args):
 
 
 class ScriptedModel:
-    """No provider patch: injected deterministic implementation of bind_tools/ainvoke."""
+    """Deterministic bind_tools/ainvoke test model."""
     def __init__(self, selections=None, decisions=None, empty_plan=False):
         self.selections = selections if selections is not None else [{"menu_item_id": ITEM_ID, "portions": 1}]
         self.empty_plan = empty_plan
@@ -220,7 +220,6 @@ async def test_invalid_plan_never_becomes_ready(selections):
 @pytest.mark.parametrize("minimum,outcome", [(50, "ready"), (70, "no_matches")])
 async def test_meal_protein_minimum_filters_total_meal_not_each_dish(minimum, outcome):
     world = World()
-    # Each serving has 32 g; two servings together have 64 g.
     request = RecommendationCreate(mode="meal_plan", query="Обед с белком",
         constraints={"budget_minor": 200000, "min_protein_g": minimum})
     result, _ = await run_world(world, request,

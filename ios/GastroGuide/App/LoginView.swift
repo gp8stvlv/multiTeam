@@ -66,7 +66,7 @@ struct ServerSettingsView: View {
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
                 Text("Включите /api/v1. Смена сервера завершает текущую сессию.").font(.caption)
                 if baseURL.lowercased().hasPrefix("http:") {
-                    Text("Учебный сервер использует HTTP: пароль и запросы передаются без TLS. Для эксплуатации укажите HTTPS.")
+                    Text("При HTTP пароль и запросы передаются без TLS. Используйте HTTPS.")
                         .font(.caption).foregroundStyle(.orange)
                 }
             }

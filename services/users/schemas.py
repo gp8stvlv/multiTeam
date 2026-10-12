@@ -23,7 +23,7 @@ class Model(BaseModel):
 
 
 class AccountEmail(EmailStr):
-    """Validated email syntax; allow .test for the explicitly configured demo account."""
+    """Validate email syntax while allowing .test addresses."""
     @classmethod
     def _validate(cls, value: str) -> str:
         try:

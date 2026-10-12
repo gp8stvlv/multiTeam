@@ -174,8 +174,7 @@ try:
     profile = call("GET", "/me/profile")
     assert profile["user_id"] == auth["user"]["id"]
     if args.public:
-        # Exercise the recommendations service through its real owner-scoped
-        # public route without creating a model request or enabling the feed.
+        # Probe owner-scoped recommendation routes without starting inference.
         assert isinstance(call("GET", "/me/feed")["items"], list)
     restaurants = call("GET", "/restaurants")["items"]
     assert len(restaurants) >= 5
@@ -271,7 +270,7 @@ try:
         client.headers["Authorization"] = old_token
         print("PASS persistent HTML upload, background extraction, review, publish and evidence")
 except Exception as exc:
-    # Assertion messages are carefully constructed to avoid echoing authenticated responses.
+    # Avoid echoing authenticated responses in failure output.
     print("SMOKE FAILED:", str(exc) if isinstance(exc, AssertionError) else type(exc).__name__, file=sys.stderr)
     raise SystemExit(1)
 finally:

@@ -29,7 +29,6 @@ class ZaiChatOpenAI(ChatOpenAI):
 def create_model(*, http_client: httpx.Client | None = None, http_async_client: httpx.AsyncClient | None = None):
     if not provider_configured():
         raise ProviderNotConfigured("Configure LLM_BASE_URL, LLM_MODEL and LLM_API_KEY")
-    # Both Z.AI general API and OpenRouter implement this chat/tool protocol.
     options = {}
     if os.environ["LLM_MODEL"].lower().startswith("glm-5."):
         options["reasoning_effort"] = os.getenv("LLM_REASONING_EFFORT", "low")

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Upload application sources. Configure .env and run Compose as a separate step.
 set -euo pipefail
 
 usage() {

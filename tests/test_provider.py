@@ -127,8 +127,7 @@ async def test_glm_explicit_token_and_reasoning_configuration_are_applied(provid
 
 @pytest.mark.asyncio
 async def test_real_adapter_full_graph_tools_cross_services_and_no_secret_persistence(provider_environment):
-    # Reuse the explicit HTTP-only world, not its fake model. ChatOpenAI and its
-    # actual OpenAI SDK perform every request, parse replies and encode tools.
+    # Keep SDK serialization and tool calling; mock only HTTP transport.
     from test_recommendations_graph import ITEM_ID, World
 
     world = World()

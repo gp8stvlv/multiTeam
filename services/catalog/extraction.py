@@ -1,10 +1,4 @@
-"""Conservative import: extract only visible declarations, never invent composition.
-
-HTML supports ordinary menu tables, .menu-item cards, Schema.org MenuItem and
-documented data-* attributes. PDF/OCR supports price-bearing lines and labelled
-fields separated by pipes. Arbitrary layouts remain reviewable source evidence;
-administrators can enter missing fields before publishing.
-"""
+"""Extract declared menu fields; preserve unsupported layouts for manual review."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -107,7 +101,6 @@ def line_item(text, key):
     first = text.split("|")[0].strip()
     name = PRICE.sub("", first).strip(" -–—:;\t")
     name = WEIGHT.sub("", name).strip(" -–—:;\t")
-    # If price is a separate pipe column, name is already clean.
     if not name or len(name) > 200:
         return None
     item = DraftItem(draft_key=key, name=name, price_minor=money(match.group(1)))

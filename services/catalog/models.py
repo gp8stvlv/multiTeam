@@ -76,7 +76,7 @@ class ImportRow(Base):
     currency: Mapped[str] = mapped_column(String(3), default="RUB")
     draft_items: Mapped[list] = mapped_column(JSON, default=list)
     warnings: Mapped[list] = mapped_column(JSON, default=list)
-    # Persisted lease is held by a single process worker; startup recovers interrupted jobs.
+    # A single-process worker recovers interrupted imports on startup.
     attempts: Mapped[int] = mapped_column(Integer, default=0)
 
 

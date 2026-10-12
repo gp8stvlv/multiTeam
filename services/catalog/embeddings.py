@@ -67,8 +67,7 @@ def configured_encoder():
 
 
 def menu_document(item, evidence_text=""):
-    # A repeated synthetic-data disclaimer is metadata, not the meaning of food.
-    # Its inclusion overwhelmed short food intents in multilingual MiniLM.
+    # Exclude synthetic metadata disclaimers from food embeddings.
     description = "" if getattr(item, "is_demo", False) else item.description or ""
     return "\n".join(filter(None, [
         item.name, description, " ".join(item.ingredients or []),

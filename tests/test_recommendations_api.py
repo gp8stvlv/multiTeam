@@ -50,7 +50,7 @@ def no_matches_result():
 
 
 def ready_result():
-    """A valid explicit seeded result; not an LLM or production pipeline substitute."""
+    """Completed recommendation fixture."""
     restaurant_id, item_id, evidence_id, version_id = [str(uuid4()) for _ in range(4)]
     nutrition = {"calories_kcal": 620, "protein_g": 32, "fat_g": 22, "carbs_g": 73.5}
     value = {"id": str(uuid4()), "outcome": "ready", "clarifications": [], "warnings": [],

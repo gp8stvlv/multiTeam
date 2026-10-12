@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Run by systemd on the VPS. Certificates and ACME keys live outside the checkout.
 set -euo pipefail
 if [[ $EUID -ne 0 ]]; then
   printf '%s\n' 'TLS renewal must run as root.' >&2

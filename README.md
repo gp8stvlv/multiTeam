@@ -30,7 +30,7 @@
 
 LLM нужна для понимания естественного языка и выбора сочетаний блюд с несколькими ограничениями. Цены, КБЖУ и аллергены проверяются по данным сервисов; численные итоги считает код с `Decimal`. Модель выбирает существующие ID блюд, а программный валидатор проверяет результат перед выдачей.
 
-Для RAG используется локальная multilingual MiniLM через FastEmbed: эмбеддинги размерности 384 и поиск в PostgreSQL/pgvector. API-ключ LLM хранится только на backend. Провайдер, endpoint и модель настраиваются в `.env`; совместимый OpenRouter можно подключить теми же переменными.
+Для RAG используется локальная multilingual MiniLM через FastEmbed: эмбеддинги размерности 384 и поиск в PostgreSQL/pgvector. API-ключ LLM хранится только на backend. Провайдер, endpoint и модель настраиваются в `.env`.
 
 ## Запуск через Docker
 
@@ -55,11 +55,9 @@ docker compose up --build -d
 
 ## Мобильное приложение
 
-Откройте `ios/GastroGuide/GastroGuide.xcodeproj` в Xcode 15+ и запустите схему **GastroGuide** на iPhone Simulator. Для локального backend задайте `http://127.0.0.1:8080/api/v1` через «Изменить адрес API» на экране входа. JWT сохраняется в Keychain. Для физического iPhone нужен Development Team и доступный телефону адрес backend.
+Откройте `ios/GastroGuide/GastroGuide.xcodeproj` в Xcode 15+ и запустите схему **GastroGuide** на iPhone Simulator. Для локального backend задайте `http://127.0.0.1:8080/api/v1` через «Изменить адрес API» на экране входа. JWT сохраняется в Keychain.
 
-VPS `90.156.213.217` сейчас остановлен до демонстрации. После его запуска внешний адрес — `https://90.156.213.217/api/v1`, Swagger — `https://90.156.213.217/docs/`; этот API выбран в новой установке iOS по умолчанию. Необязательная HTTPS-конфигурация находится в `compose.public.yaml` и `infra/public/`.
-
-## Проверка и демонстрация
+## Тестирование
 
 Backend-тесты запускаются в образе с изолированными SQLite-базами:
 
@@ -74,7 +72,7 @@ docker compose run --rm --no-deps \
   -e CATALOG_RUN_MODEL_TESTS=1 catalog python -m pytest -q /app/tests
 ```
 
-Живая проверка API и настоящей LLM после запуска backend:
+Проверка API с вызовом LLM после запуска backend:
 
 ```sh
 python3.12 -m venv .venv
@@ -82,11 +80,7 @@ python3.12 -m venv .venv
 .venv/bin/python scripts/smoke.py --agents
 ```
 
-Для внешнего сервера добавьте `--url https://90.156.213.217 --public`. Флаг `--imports` проверяет HTML-импорт, `--proactive` вместе с `--agents` ждёт настоящий scheduler персональной ленты. Unit-тесты используют явно внедрённые модели и HTTP mocks; smoke с `--agents` вызывает настоящий провайдер.
-
-На защите: задать профиль → запросить хинкали с бюджетом → показать цену, КБЖУ и источник → записать половину порции → открыть дневной итог. Через Swagger администратор может показать импорт меню и `/recommendations/{id}/trace`.
-
-Пройдены 76 backend-тестов с настоящими MiniLM и Tesseract, полная сборка iOS Simulator и 10 XCTest. Сборка и тесты iOS также проходят в [GitHub Actions](https://github.com/gp8stvlv/multiTeam/actions/workflows/ios-build.yml). Сценарий приложения с настоящим GLM проверен. API-тесты iOS: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun swift test --package-path ios/GastroAPI`. Физический iPhone, карта, push, доставка и оплата не входят в проверенный MVP.
+Для внешнего сервера добавьте `--url https://90.156.213.217 --public`. Флаг `--imports` проверяет HTML-импорт, `--proactive` вместе с `--agents` ждёт scheduler персональной ленты. Unit-тесты используют модели и HTTP mocks; smoke с `--agents` вызывает LLM-провайдер.
 
 ## Структура и документация
 

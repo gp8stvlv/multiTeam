@@ -122,7 +122,6 @@ def test_exact_food_intent_reranks_imperfect_cosine_candidates(catalog):
     assert hits[0]["ranking_score"] > hits[2]["ranking_score"]
     assert hits[0]["matched_query_terms"] == ["хинкали"]
     assert hits[0]["ranking_method"] == "cosine_plus_explicit_name_tag_bonus"
-    # Normalization recognizes an inflection, and mandatory filters still prevail.
     profile_query = {"query": "Хочу хинкалей", "constraints": {"budget_minor": 65000}, "limit": 3}
     hits = client.post("/api/v1/search", headers=user, json=profile_query).json()["items"]
     assert hits[0]["item"]["name"] == "Хинкали с грибами, 4 шт."
