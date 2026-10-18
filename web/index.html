@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#143d35">
+  <meta name="description" content="ГастроГид — поиск блюд, подбор под ваши ограничения и дневник питания.">
+  <title>ГастроГид — вкусно и по делу</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#home" aria-label="ГастроГид — главная">
+        <span class="brand-mark" aria-hidden="true">✳</span>
+        <span>гастро<span class="brand-light">гид</span><small>выбирайте с удовольствием</small></span>
+      </a>
+      <div class="sidebar-label">МЕНЮ</div>
+      <nav class="side-nav" aria-label="Основная навигация">
+        <button class="nav-item active" data-page="home"><span class="nav-icon">⌂</span> Главная</button>
+        <button class="nav-item" data-page="restaurants"><span class="nav-icon">▦</span> Рестораны</button>
+        <button class="nav-item" data-page="diary"><span class="nav-icon">◷</span> Дневник</button>
+        <button class="nav-item" data-page="profile"><span class="nav-icon">◌</span> Профиль</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-note"><span>✦</span><div><strong>Найдём ваше блюдо</strong><p>Расскажите, чего хочется и что для вас важно.</p></div></div>
+      </div>
+    </aside>
+
+    <div class="main-wrap">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobile-menu" aria-label="Открыть меню">☰</button>
+        <span class="topbar-greeting">Хороший выбор начинается здесь <span aria-hidden="true">✳</span></span>
+        <div class="topbar-actions">
+          <span class="connection-pill" id="connection-pill"><span class="status-dot"></span> Проверяем API</span>
+          <button class="account-button" id="account-button"><span class="avatar">●</span><span id="account-label">Войти</span></button>
+        </div>
+      </header>
+
+      <main id="page-content">
+        <div class="auth-banner hidden" id="auth-banner"><span>Нужен вход</span> Введите командный API-токен и войдите, чтобы открыть каталог. <button data-open-auth>Войти →</button></div>
+        <section class="page active" id="page-home" aria-labelledby="home-title">
+          <div class="hero">
+            <div class="hero-copy">
+              <div class="eyebrow"><span class="eyebrow-star">✦</span> УМНЫЙ ПОИСК ПО МЕНЮ</div>
+              <h1 id="home-title">Что бы вам<br><em>съесть сегодня?</em></h1>
+              <p>Найдите блюдо по настроению или соберите приём пищи с учётом бюджета, вкусов и калорийности.</p>
+              <div class="hero-points"><span>✓ Цены из меню</span><span>✓ Состав, если указан</span><span>✓ Подбор под бюджет</span></div>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+              <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+              <div class="food-plate"><div class="food-inner"><span class="food-leaf leaf-one"></span><span class="food-leaf leaf-two"></span><span class="food-leaf leaf-three"></span><span class="food-tomato tomato-one"></span><span class="food-tomato tomato-two"></span><span class="food-tomato tomato-three"></span><span class="food-pasta pasta-one"></span><span class="food-pasta pasta-two"></span><span class="food-pasta pasta-three"></span><span class="food-pasta pasta-four"></span><span class="food-pasta pasta-five"></span><span class="food-pasta pasta-six"></span></div></div>
+              <div class="art-note note-top">вкусно <span>✦</span></div><div class="art-note note-bottom">и под ваш запрос ↗</div>
+            </div>
+          </div>
+
+          <div class="search-panel" id="search-panel">
+            <div class="search-heading"><div><span class="section-kicker">ПОИСК БЛЮД</span><h2>Начните с того, что хочется</h2></div><span class="search-hint">Понимаем запросы на обычном языке</span></div>
+            <div class="mode-switch" role="group" aria-label="Режим поиска"><button class="mode active" data-mode="dish_search">Найти блюдо</button><button class="mode" data-mode="meal_plan">Собрать приём пищи</button></div>
+            <form id="search-form">
+              <label for="query-input">Ваш запрос</label>
+              <div class="query-wrap"><span aria-hidden="true">⌕</span><input id="query-input" name="query" placeholder="Например: хочу хинкали, не очень острые" required maxlength="1000" autocomplete="off"><button type="submit" id="search-submit">Подобрать <span aria-hidden="true">→</span></button></div>
+              <div class="search-controls"><label>Бюджет до <span class="field"><input id="budget-input" type="number" min="0" step="1" placeholder="Любой"> ₽</span></label><label>Калорий до <span class="field"><input id="calories-input" type="number" min="0" step="1" placeholder="Любых"> ккал</span></label><span class="control-note">Цена — за порцию</span></div>
+            </form>
+            <div class="query-suggestions"><span>Попробуйте:</span><button data-suggestion="Хинкали, не очень острые">Хинкали, не очень острые</button><button data-suggestion="Что-нибудь с курицей до 700 ₽">С курицей до 700 ₽</button><button data-suggestion="Лёгкий вегетарианский обед">Лёгкий обед</button></div>
+          </div>
+
+          <section id="results-section" class="results-section hidden" aria-live="polite"><div class="section-heading"><div><span class="section-kicker">РЕЗУЛЬТАТ</span><h2>Под ваш запрос</h2></div><button class="text-button" id="clear-results">Новый поиск ↗</button></div><div id="results-content"></div></section>
+
+          <section class="home-restaurants"><div class="section-heading"><div><span class="section-kicker">ИССЛЕДУЙТЕ МЕНЮ</span><h2>Рестораны и их меню</h2></div><button class="text-button" data-page="restaurants">Все рестораны ↗</button></div><div class="restaurant-grid" id="home-restaurants"></div></section>
+          <div class="bottom-banner"><div class="banner-icon">✶</div><div><strong>Уже выбрали блюдо?</strong><p>Запишите его в дневник и следите за питанием без ручных расчётов.</p></div><button data-page="diary">Открыть дневник →</button></div>
+        </section>
+
+        <section class="page" id="page-restaurants" aria-labelledby="restaurants-title"><div class="page-intro"><span class="section-kicker">КАТАЛОГ</span><h1 id="restaurants-title">Рестораны и меню</h1><p>Откройте ресторан, чтобы посмотреть блюда и цены. Состав показан, если он загружен из меню. КБЖУ с пометкой «оценка» рассчитаны приблизительно.</p></div><div class="restaurant-grid all-restaurants" id="all-restaurants"></div><div id="menu-section" class="menu-section hidden"></div></section>
+
+        <section class="page" id="page-diary" aria-labelledby="diary-title"><div class="page-intro"><span class="section-kicker">ВАШ ДЕНЬ</span><h1 id="diary-title">Дневник питания</h1><p>Блюда сохраняются со снимком состава и КБЖУ на момент записи.</p></div><div class="diary-toolbar"><label for="diary-date">Дата</label><input id="diary-date" type="date"><button id="diary-refresh" class="outline-button">Обновить ↻</button></div><div id="diary-content"></div></section>
+
+        <section class="page" id="page-profile" aria-labelledby="profile-title"><div class="page-intro"><span class="section-kicker">ВАШИ ПРЕДПОЧТЕНИЯ</span><h1 id="profile-title">Профиль</h1><p>Параметры, которые помогают точнее подбирать блюда.</p></div><div id="profile-content"></div></section>
+      </main>
+      <footer class="footer"><span>ГастроГид · веб-клиент</span><span id="footer-source">Данные загружаются из API</span></footer>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="auth-modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title"><button class="modal-close" data-close="auth-modal" aria-label="Закрыть">×</button><span class="section-kicker">ЛИЧНЫЙ КАБИНЕТ</span><h2 id="auth-title">Войти в ГастроГид</h2><p>Командный API-токен открывает доступ к серверу; email и пароль — к вашему аккаунту.</p><div class="auth-tabs"><button class="active" data-auth-mode="login">Вход</button><button data-auth-mode="register">Регистрация</button></div><form id="auth-form"><label for="auth-api-key">Командный API-токен</label><input id="auth-api-key" type="password" required autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Введите токен команды"><label for="auth-email">Email</label><input id="auth-email" type="email" required autocomplete="email" placeholder="name@example.com"><label for="auth-password">Пароль</label><input id="auth-password" type="password" required minlength="1" autocomplete="current-password" placeholder="Пароль аккаунта"><p class="form-help">Токен передаётся с каждым запросом к API. Токен и JWT остаются в памяти вкладки до выхода или закрытия.</p><p class="form-error hidden" id="auth-error"></p><button type="submit" class="primary-button" id="auth-submit">Войти</button></form></div></div>
+  <div class="toast hidden" id="toast" role="status"></div>
+</body>
+</html>

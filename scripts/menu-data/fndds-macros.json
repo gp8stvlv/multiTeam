@@ -1,0 +1,413 @@
+{
+  "source": "USDA FoodData Central FNDDS 2021-2023 (October 2024), values per 100 g",
+  "components": {
+    "greens": {
+      "fdc_id": 2709792,
+      "protein_g": 1.31,
+      "fat_g": 0.21,
+      "carbs_g": 3.43
+    },
+    "tomato": {
+      "fdc_id": 2709719,
+      "protein_g": 0.82,
+      "fat_g": 0.31,
+      "carbs_g": 4.04
+    },
+    "cucumber": {
+      "fdc_id": 2709784,
+      "protein_g": 0.62,
+      "fat_g": 0.18,
+      "carbs_g": 2.95
+    },
+    "vegetables": {
+      "fdc_id": 2709664,
+      "protein_g": 0.98,
+      "fat_g": 0.36,
+      "carbs_g": 10.7
+    },
+    "beet": {
+      "fdc_id": 2709770,
+      "protein_g": 1.61,
+      "fat_g": 0.17,
+      "carbs_g": 9.56
+    },
+    "eggplant": {
+      "fdc_id": 2709930,
+      "protein_g": 1.03,
+      "fat_g": 2.92,
+      "carbs_g": 6.13
+    },
+    "pumpkin": {
+      "fdc_id": 2709692,
+      "protein_g": 1.05,
+      "fat_g": 2.84,
+      "carbs_g": 6.77
+    },
+    "mushroom": {
+      "fdc_id": 2709938,
+      "protein_g": 3.52,
+      "fat_g": 3.6,
+      "carbs_g": 5.0
+    },
+    "olive": {
+      "fdc_id": 2710088,
+      "protein_g": 0.84,
+      "fat_g": 10.9,
+      "carbs_g": 6.04
+    },
+    "avocado": {
+      "fdc_id": 2709223,
+      "protein_g": 2.0,
+      "fat_g": 14.7,
+      "carbs_g": 8.53
+    },
+    "oil": {
+      "fdc_id": 2710186,
+      "protein_g": 0.0,
+      "fat_g": 100,
+      "carbs_g": 0.0
+    },
+    "caesar": {
+      "fdc_id": 2710199,
+      "protein_g": 2.17,
+      "fat_g": 57.8,
+      "carbs_g": 3.3
+    },
+    "mayo": {
+      "fdc_id": 2710204,
+      "protein_g": 0.96,
+      "fat_g": 74.8,
+      "carbs_g": 0.57
+    },
+    "cream": {
+      "fdc_id": 2705597,
+      "protein_g": 2.02,
+      "fat_g": 35.6,
+      "carbs_g": 3.8
+    },
+    "sour": {
+      "fdc_id": 2705614,
+      "protein_g": 3.07,
+      "fat_g": 18.0,
+      "carbs_g": 5.56
+    },
+    "yogurt": {
+      "fdc_id": 2705418,
+      "protein_g": 3.82,
+      "fat_g": 4.48,
+      "carbs_g": 5.57
+    },
+    "butter": {
+      "fdc_id": 2710155,
+      "protein_g": 0.85,
+      "fat_g": 82.2,
+      "carbs_g": 0.06
+    },
+    "honey": {
+      "fdc_id": 2710281,
+      "protein_g": 0.3,
+      "fat_g": 0.0,
+      "carbs_g": 82.4
+    },
+    "cheese": {
+      "fdc_id": 2705722,
+      "protein_g": 23.7,
+      "fat_g": 20.4,
+      "carbs_g": 4.44
+    },
+    "cheddar": {
+      "fdc_id": 2705709,
+      "protein_g": 23.3,
+      "fat_g": 34.0,
+      "carbs_g": 2.44
+    },
+    "parmesan": {
+      "fdc_id": 2705728,
+      "protein_g": 29.9,
+      "fat_g": 28.8,
+      "carbs_g": 8.36
+    },
+    "feta": {
+      "fdc_id": 2705714,
+      "protein_g": 19.7,
+      "fat_g": 19.1,
+      "carbs_g": 5.58
+    },
+    "brie": {
+      "fdc_id": 2705708,
+      "protein_g": 20.8,
+      "fat_g": 27.7,
+      "carbs_g": 0.45
+    },
+    "ricotta": {
+      "fdc_id": 2705750,
+      "protein_g": 9.6,
+      "fat_g": 9.46,
+      "carbs_g": 6.0
+    },
+    "bread": {
+      "fdc_id": 2707598,
+      "protein_g": 9.43,
+      "fat_g": 3.59,
+      "carbs_g": 49.2
+    },
+    "tortilla": {
+      "fdc_id": 2707824,
+      "protein_g": 8.2,
+      "fat_g": 7.99,
+      "carbs_g": 49.4
+    },
+    "beef": {
+      "fdc_id": 2705824,
+      "protein_g": 27.0,
+      "fat_g": 12.9,
+      "carbs_g": 0.0
+    },
+    "ribeye": {
+      "fdc_id": 2705828,
+      "protein_g": 25.0,
+      "fat_g": 17.7,
+      "carbs_g": 0.0
+    },
+    "braised_beef": {
+      "fdc_id": 2705848,
+      "protein_g": 28.4,
+      "fat_g": 15.4,
+      "carbs_g": 0.0
+    },
+    "brisket": {
+      "fdc_id": 2705851,
+      "protein_g": 29.4,
+      "fat_g": 12.0,
+      "carbs_g": 0.0
+    },
+    "lamb": {
+      "fdc_id": 2705905,
+      "protein_g": 24.3,
+      "fat_g": 20.8,
+      "carbs_g": 0.0
+    },
+    "mince": {
+      "fdc_id": 2705854,
+      "protein_g": 25.6,
+      "fat_g": 16.8,
+      "carbs_g": 0.0
+    },
+    "chicken": {
+      "fdc_id": 2705956,
+      "protein_g": 30.2,
+      "fat_g": 3.52,
+      "carbs_g": 0.0
+    },
+    "thigh": {
+      "fdc_id": 2706029,
+      "protein_g": 23.1,
+      "fat_g": 14.6,
+      "carbs_g": 0.0
+    },
+    "turkey": {
+      "fdc_id": 2706109,
+      "protein_g": 28.8,
+      "fat_g": 2.06,
+      "carbs_g": 0.0
+    },
+    "pork": {
+      "fdc_id": 2705867,
+      "protein_g": 27.0,
+      "fat_g": 9.17,
+      "carbs_g": 0.01
+    },
+    "ribs": {
+      "fdc_id": 2705894,
+      "protein_g": 16.2,
+      "fat_g": 15.1,
+      "carbs_g": 12.1
+    },
+    "sausage": {
+      "fdc_id": 2706190,
+      "protein_g": 18.5,
+      "fat_g": 27.2,
+      "carbs_g": 1.42
+    },
+    "bacon": {
+      "fdc_id": 2705885,
+      "protein_g": 37.4,
+      "fat_g": 35.8,
+      "carbs_g": 1.9
+    },
+    "salmon": {
+      "fdc_id": 2706284,
+      "protein_g": 20.4,
+      "fat_g": 11.2,
+      "carbs_g": 0.0
+    },
+    "salmon_cooked": {
+      "fdc_id": 2706286,
+      "protein_g": 25.4,
+      "fat_g": 18.4,
+      "carbs_g": 0.01
+    },
+    "trout": {
+      "fdc_id": 2706303,
+      "protein_g": 24.8,
+      "fat_g": 12.2,
+      "carbs_g": 0.01
+    },
+    "herring": {
+      "fdc_id": 2706261,
+      "protein_g": 20.1,
+      "fat_g": 14.3,
+      "carbs_g": 7.79
+    },
+    "tuna": {
+      "fdc_id": 2706308,
+      "protein_g": 24.4,
+      "fat_g": 0.49,
+      "carbs_g": 0.0
+    },
+    "shrimp": {
+      "fdc_id": 2706362,
+      "protein_g": 17.3,
+      "fat_g": 3.55,
+      "carbs_g": 1.16
+    },
+    "cod": {
+      "fdc_id": 2706241,
+      "protein_g": 19.0,
+      "fat_g": 5.04,
+      "carbs_g": 0.01
+    },
+    "duck": {
+      "fdc_id": 2706137,
+      "protein_g": 18.9,
+      "fat_g": 28.2,
+      "carbs_g": 0.0
+    },
+    "rice": {
+      "fdc_id": 2708403,
+      "protein_g": 2.67,
+      "fat_g": 0.28,
+      "carbs_g": 28.0
+    },
+    "buckwheat": {
+      "fdc_id": 2708362,
+      "protein_g": 3.24,
+      "fat_g": 3.97,
+      "carbs_g": 19.0
+    },
+    "cornmeal": {
+      "fdc_id": 2708374,
+      "protein_g": 1.12,
+      "fat_g": 0.28,
+      "carbs_g": 12.5
+    },
+    "pasta": {
+      "fdc_id": 2708357,
+      "protein_g": 5.76,
+      "fat_g": 0.92,
+      "carbs_g": 30.7
+    },
+    "potato": {
+      "fdc_id": 2709383,
+      "protein_g": 1.95,
+      "fat_g": 0.1,
+      "carbs_g": 21.4
+    },
+    "mash": {
+      "fdc_id": 2709492,
+      "protein_g": 2.15,
+      "fat_g": 4.07,
+      "carbs_g": 17.6
+    },
+    "fries": {
+      "fdc_id": 2709456,
+      "protein_g": 2.5,
+      "fat_g": 14.1,
+      "carbs_g": 23.2
+    },
+    "sweetpotato": {
+      "fdc_id": 2709699,
+      "protein_g": 1.64,
+      "fat_g": 0.39,
+      "carbs_g": 18.0
+    },
+    "broccoli": {
+      "fdc_id": 2710792,
+      "protein_g": 2.68,
+      "fat_g": 0.35,
+      "carbs_g": 6.53
+    },
+    "egg": {
+      "fdc_id": 2707154,
+      "protein_g": 12.4,
+      "fat_g": 9.96,
+      "carbs_g": 0.96
+    },
+    "walnut": {
+      "fdc_id": 2707531,
+      "protein_g": 14.6,
+      "fat_g": 69.7,
+      "carbs_g": 10.9
+    },
+    "sugar": {
+      "fdc_id": 2710258,
+      "protein_g": 0.0,
+      "fat_g": 0.32,
+      "carbs_g": 99.6
+    },
+    "custard": {
+      "fdc_id": 2705684,
+      "protein_g": 4.06,
+      "fat_g": 2.83,
+      "carbs_g": 17.8
+    },
+    "cheesecake": {
+      "fdc_id": 2707861,
+      "protein_g": 5.29,
+      "fat_g": 26.5,
+      "carbs_g": 34.8
+    },
+    "tiramisu": {
+      "fdc_id": 2705702,
+      "protein_g": 5.65,
+      "fat_g": 23.9,
+      "carbs_g": 29.4
+    },
+    "cake": {
+      "fdc_id": 2707882,
+      "protein_g": 5.0,
+      "fat_g": 14.0,
+      "carbs_g": 53.6
+    },
+    "chocolate_cake": {
+      "fdc_id": 2707871,
+      "protein_g": 4.87,
+      "fat_g": 29.4,
+      "carbs_g": 37.9
+    },
+    "icecream": {
+      "fdc_id": 2705630,
+      "protein_g": 3.5,
+      "fat_g": 11.0,
+      "carbs_g": 23.6
+    },
+    "baklava": {
+      "fdc_id": 2708044,
+      "protein_g": 6.58,
+      "fat_g": 29.3,
+      "carbs_g": 37.6
+    },
+    "milk": {
+      "fdc_id": 2705385,
+      "protein_g": 3.27,
+      "fat_g": 3.2,
+      "carbs_g": 4.63
+    }
+  },
+  "source_url": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_survey_food_json_2024-10-31.zip",
+  "nutrient_ids": {
+    "protein_g": 1003,
+    "fat_g": 1004,
+    "carbs_g": 1005
+  }
+}

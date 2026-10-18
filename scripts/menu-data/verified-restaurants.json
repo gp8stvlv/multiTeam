@@ -1,0 +1,1173 @@
+[
+  {
+    "name": "Барвиха Lounge",
+    "address": "Москва, Ленинский проспект, 146",
+    "location": {
+      "latitude": 55.6566965291,
+      "longitude": 37.4965046189
+    },
+    "cuisines": [
+      "european",
+      "japanese"
+    ],
+    "website": "https://barvihalounge.ru/menu",
+    "source_url": "https://barvihalounge.ru/menu",
+    "source_file": "tmp/pdfs/barvikha-2.jpg",
+    "source_kind": "image",
+    "items": [
+      {
+        "name": "Классический Цезарь с креветками",
+        "price_minor": 129000,
+        "source_page": 2
+      },
+      {
+        "name": "Классический Цезарь с курицей",
+        "price_minor": 99000,
+        "source_page": 2
+      },
+      {
+        "name": "Оливье со слабосолёным лососем",
+        "price_minor": 89000,
+        "source_page": 2
+      },
+      {
+        "name": "Оливье с куриной грудкой",
+        "price_minor": 52000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат с печёной свёклой и копчёной уткой",
+        "price_minor": 69000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат по-деревенски с копчёной сметаной",
+        "price_minor": 55000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат греческий",
+        "price_minor": 99000,
+        "source_page": 2
+      },
+      {
+        "name": "Баклажан темпура с узбекскими томатами и фисташками",
+        "price_minor": 85000,
+        "source_page": 2
+      },
+      {
+        "name": "Руккола с креветками, клубникой и сыром пармезан",
+        "price_minor": 140000,
+        "source_page": 2
+      },
+      {
+        "name": "Гриль-салат с морепродуктами",
+        "price_minor": 130000,
+        "source_page": 2
+      },
+      {
+        "name": "Тартар из лосося",
+        "price_minor": 129000,
+        "source_page": 2
+      },
+      {
+        "name": "Тартар из тунца",
+        "price_minor": 95000,
+        "source_page": 2
+      },
+      {
+        "name": "Тартар из говядины классический",
+        "price_minor": 105000,
+        "source_page": 2
+      },
+      {
+        "name": "Брускетта с лососем",
+        "price_minor": 99000,
+        "source_page": 2
+      },
+      {
+        "name": "Брускетта с лососем спайси",
+        "price_minor": 99000,
+        "source_page": 2
+      },
+      {
+        "name": "Брускетта с ростбифом",
+        "price_minor": 99000,
+        "source_page": 2
+      },
+      {
+        "name": "Сырная тарелка",
+        "price_minor": 170000,
+        "source_page": 2
+      },
+      {
+        "name": "Овощной сет с соусом",
+        "price_minor": 110000,
+        "source_page": 2
+      },
+      {
+        "name": "Оливки",
+        "price_minor": 69000,
+        "source_page": 2
+      },
+      {
+        "name": "Маслины каламата",
+        "price_minor": 69000,
+        "source_page": 2
+      },
+      {
+        "name": "Закуска с сельдью",
+        "price_minor": 55000,
+        "source_page": 2
+      },
+      {
+        "name": "Попкорн из креветок",
+        "price_minor": 109000,
+        "source_page": 2
+      },
+      {
+        "name": "Попкорн из курицы",
+        "price_minor": 59000,
+        "source_page": 2
+      },
+      {
+        "name": "Сырные палочки с брусничным соусом",
+        "price_minor": 59000,
+        "source_page": 2
+      },
+      {
+        "name": "Стейк миньон Латинская Америка",
+        "price_minor": 230000,
+        "source_page": 2
+      },
+      {
+        "name": "Стейк рибай Праймбиф Black Angus",
+        "price_minor": 149000,
+        "source_page": 2
+      },
+      {
+        "name": "Стейк стриплойн Праймбиф Black Angus",
+        "price_minor": 110000,
+        "source_page": 2
+      },
+      {
+        "name": "Стейк денвер Праймбиф Black Angus",
+        "price_minor": 190000,
+        "source_page": 2
+      },
+      {
+        "name": "Стейк из лосося со шпинатом и шампиньонами",
+        "price_minor": 169000,
+        "source_page": 2
+      },
+      {
+        "name": "Гречка с креветками",
+        "price_minor": 85000,
+        "source_page": 2
+      },
+      {
+        "name": "Куриное бедро с булгуром",
+        "price_minor": 89000,
+        "source_page": 2
+      },
+      {
+        "name": "Куриный стейк тандури",
+        "price_minor": 115000,
+        "source_page": 2
+      },
+      {
+        "name": "Шницель куриный",
+        "price_minor": 139000,
+        "source_page": 2
+      },
+      {
+        "name": "Цыплёнок на гриле с узбекскими томатами",
+        "price_minor": 159000,
+        "source_page": 2
+      },
+      {
+        "name": "Котлетки из индейки с картофельным пюре",
+        "price_minor": 110000,
+        "source_page": 2
+      },
+      {
+        "name": "Щёчки бычка с картофельным пюре и соусом коги",
+        "price_minor": 140000,
+        "source_page": 2
+      },
+      {
+        "name": "Говядина в азиатском стиле с рисом",
+        "price_minor": 149000,
+        "source_page": 2
+      },
+      {
+        "name": "Говяжьи рёбра копчёные с соусом из еловых шишек",
+        "price_minor": 159000,
+        "source_page": 2
+      },
+      {
+        "name": "Брискет с картофельным пюре и соусом из тыквы",
+        "price_minor": 179000,
+        "source_page": 2
+      },
+      {
+        "name": "Бефстроганов с картофельным пюре",
+        "price_minor": 130000,
+        "source_page": 2
+      },
+      {
+        "name": "Каша из топора",
+        "price_minor": 79000,
+        "source_page": 2
+      },
+      {
+        "name": "Паппарделле с лососем и красной икрой",
+        "price_minor": 99000,
+        "source_page": 2
+      },
+      {
+        "name": "Лапша с курицей и креветками",
+        "price_minor": 85000,
+        "source_page": 2
+      },
+      {
+        "name": "Фетучини с куриным бедром терияки",
+        "price_minor": 69000,
+        "source_page": 2
+      },
+      {
+        "name": "Лингвини карбонара",
+        "price_minor": 79000,
+        "source_page": 2
+      },
+      {
+        "name": "Пенне с ростбифом в трюфельном соусе",
+        "price_minor": 115000,
+        "source_page": 2
+      },
+      {
+        "name": "Бургер «Барвиха»",
+        "price_minor": 139000,
+        "source_page": 2
+      },
+      {
+        "name": "Бургер «Классика»",
+        "price_minor": 95000,
+        "source_page": 2
+      },
+      {
+        "name": "Бургер «Сырный» с котлетой из мраморной говядины",
+        "price_minor": 115000,
+        "source_page": 2
+      },
+      {
+        "name": "Бургер с камамбером, говядиной и брусничным соусом",
+        "price_minor": 135000,
+        "source_page": 2
+      },
+      {
+        "name": "Бургер с рваной говядиной, манго и халапеньо",
+        "price_minor": 159000,
+        "source_page": 2
+      },
+      {
+        "name": "Бургер с хрустящим цыплёнком",
+        "price_minor": 69000,
+        "source_page": 2
+      },
+      {
+        "name": "Халяль бургер «Классика»",
+        "price_minor": 105000,
+        "source_page": 2
+      },
+      {
+        "name": "Халяль бургер «Сырный»",
+        "price_minor": 125000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Барвиха",
+        "price_minor": 89000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Маргарита",
+        "price_minor": 60000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Пепперони халяль",
+        "price_minor": 89000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Цезарь",
+        "price_minor": 119000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Четыре сыра",
+        "price_minor": 89000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Халяль",
+        "price_minor": 99000,
+        "source_page": 2
+      },
+      {
+        "name": "Борщ халяль",
+        "price_minor": 69000,
+        "source_page": 2
+      },
+      {
+        "name": "Суп куриный",
+        "price_minor": 59000,
+        "source_page": 2
+      },
+      {
+        "name": "Том ям с морепродуктами",
+        "price_minor": 110000,
+        "source_page": 2
+      },
+      {
+        "name": "Суп тыквенный с креветкой",
+        "price_minor": 75000,
+        "source_page": 2
+      },
+      {
+        "name": "Крем-суп грибной капучино",
+        "price_minor": 69000,
+        "source_page": 2
+      },
+      {
+        "name": "Сырный суп с гренками",
+        "price_minor": 79000,
+        "source_page": 2
+      },
+      {
+        "name": "Тирамису",
+        "price_minor": 69000,
+        "source_page": 2
+      },
+      {
+        "name": "Шоколадный фондан",
+        "price_minor": 69000,
+        "source_page": 2
+      },
+      {
+        "name": "Чизкейк",
+        "price_minor": 69000,
+        "source_page": 2
+      },
+      {
+        "name": "Медовик",
+        "price_minor": 69000,
+        "source_page": 2
+      }
+    ]
+  },
+  {
+    "name": "Хачапури и вино",
+    "address": "Москва, ул. Покровка, 21",
+    "location": {
+      "latitude": 55.7598143,
+      "longitude": 37.6470694
+    },
+    "cuisines": [
+      "georgian"
+    ],
+    "website": "https://hachapuriivino.ru/menu-msk",
+    "source_url": "https://hachapuriivino.moscow/",
+    "source_file": "tmp/pdfs/hachapuri-moscow.html",
+    "source_kind": "html",
+    "items": [
+      {
+        "name": "Мини хинкали с говяжьими щечками",
+        "price_minor": 42200,
+        "portion_weight_g": 200.0,
+        "description": "Состав: мука, вода, соль, говяжьи щечки, соус винный (масло подсолнечное, чеснок, розмарин, тимьян, тархун, кориандр, аджика сухая, перец черный горошек, соль сванская, сухой бульон, вино изабелла, вода) лук репчатый, кинза, кондари, масло подсолнечное, соус перечный (масло сливочное, лук репчатый, перец черный горошек, коньяк 3 года, сливки 22%, вода, растительное масло, томатная паста).",
+        "source_url": "https://hachapuriivino.moscow/menu/blyuda_mesyatsa3/mini_khinkali_s_govyazhimi_shchechkami"
+      },
+      {
+        "name": "Тёплый салат с ягнёнком",
+        "price_minor": 61000,
+        "portion_weight_g": 200.0,
+        "description": "Состав: томат, огурец, салатный микс (фриссе, романо, родиччо), слайсы барашка, маринованный красный лук (лук красный, винный уксус, сахар), мята, базилик, кинза, масло оливковое, масло подсолнечное, соус наршараб, соль, перец черный молотый.",
+        "source_url": "https://hachapuriivino.moscow/menu/blyuda_mesyatsa3/tyoplii_salat_s_yagnyonkom"
+      },
+      {
+        "name": "Телячьи щечки с трюфельным пюре",
+        "price_minor": 71200,
+        "portion_weight_g": 350.0,
+        "description": "Состав: телячьи щёчки (говяжьи щечки, винный соус (масло подсолнечное, тимьян, чеснок, розмарин, тархун, аджика сухая, кориандр, вино Изабелла, сухой бульон, черный перец горшком, вода, сванская соль)), ташмиджаби (картофель, сливки 22%, масло сливочное, сванская соль), паста трюфельная, кинза, маринованная капуста (капуста, свекла, чеснок, уксус 9%, сухая аджика, сахар, соль). Телячьи щечки подаются с трюфельным пюре, украшаются маринованной капустой и кинзой.",
+        "source_url": "https://hachapuriivino.moscow/menu/blyuda_mesyatsa3/telyachi_shchechki_s_tryufelnim_pyure"
+      },
+      {
+        "name": "Чкмерули с морепродуктами",
+        "price_minor": 71200,
+        "portion_weight_g": 250.0,
+        "description": "Состав: креветки, треска, кальмар, чеснок, кориандр, масло растительное, сливки 22%, хмели-сунели, соль сванская, соль, кинза, укроп, лаваш (мука пшеничная, масло растительное, дрожжи, соль, сахар, вода, кефир).",
+        "source_url": "https://hachapuriivino.moscow/menu/blyuda_mesyatsa3/chkmeruli_s_moreproduktami1"
+      },
+      {
+        "name": "Крем брюле с копченым сулугуни",
+        "price_minor": 41200,
+        "portion_weight_g": 140.0,
+        "description": "Состав: крем брюле (желток куриный, сливки 22%, копченый сулугуни, сахар), грецкие орехи карамелизированные (грецкий орех, сахар, масло подсолнечное), сахар.",
+        "source_url": "https://hachapuriivino.moscow/menu/blyuda_mesyatsa3/krem_bryule_s_kopchenim_suluguni"
+      },
+      {
+        "name": "Эларджи",
+        "price_minor": 22000,
+        "portion_weight_g": 350.0,
+        "description": "Состав: (кукурузная крупа, вода, молоко, сыр сулугуни, масло сливочное, соль, сахар, варенье в ассортименте.",
+        "source_url": "https://hachapuriivino.moscow/menu/zavtraki1/elardzhi2"
+      },
+      {
+        "name": "Мацони с вяленым инжиром и грецкими орехами",
+        "price_minor": 26500,
+        "portion_weight_g": 190.0,
+        "description": "Состав: мацони, инжир вяленый, овсянка жареная, мёд натуральный, орехи карамелизированные (орехи грецкие, сахар), соус наршараб, гранат.",
+        "source_url": "https://hachapuriivino.moscow/menu/zavtraki1/matsoni_s_vyalenim_inzhirom_i_gretskimi_orekhami"
+      },
+      {
+        "name": "Пхали из свеклы",
+        "price_minor": 10500,
+        "portion_weight_g": 60.0,
+        "description": "Состав: (свекла, грецкий орех, соль, кинза, зерна граната, сухая аджика, чеснок, лук красный, петрушка.",
+        "source_url": "https://hachapuriivino.moscow/menu/zakuski4/pkhali_iz_svekli2"
+      },
+      {
+        "name": "Рулет из баклажана с надуги",
+        "price_minor": 10500,
+        "portion_weight_g": 45.0,
+        "description": "Состав: баклажан, масло растительное, грецкий орех, крем надуги, сухая аджика, чеснок, кинза, соль, соус наршараб.",
+        "source_url": "https://hachapuriivino.moscow/menu/zakuski4/rulet_iz_baklazhana_s_nadugi2"
+      },
+      {
+        "name": "Сырная тарелка",
+        "price_minor": 69200,
+        "portion_weight_g": 410.0,
+        "description": "Состав: сыр сулугуни, сыр имеретинский, мед, грецкие орехи, сезонное варенье.",
+        "source_url": "https://hachapuriivino.moscow/menu/zakuski4/sirnaya_tarelka2"
+      },
+      {
+        "name": "Тарелка с соленьями",
+        "price_minor": 34000,
+        "portion_weight_g": 200.0,
+        "description": "Состав: капуста маринованная в свекле, черемша соленая, огурцы соленые, чеснок соленый, перец соленый острый, кинза.",
+        "source_url": "https://hachapuriivino.moscow/menu/zakuski4/tarelka_s_solenyami1"
+      },
+      {
+        "name": "Запеченные баклажаны с сулугуни",
+        "price_minor": 48600,
+        "portion_weight_g": 190.0,
+        "description": "Состав: баклажаны, сыр сулугуни, сыр имеретинский, масло растительное, соль, кинза, томаты, чеснок, черный перец.",
+        "source_url": "https://hachapuriivino.moscow/menu/zakuski4/zapechennie_baklazhani_s_suluguni"
+      },
+      {
+        "name": "Салат с жареным сулугуни",
+        "price_minor": 42400,
+        "portion_weight_g": 210.0,
+        "description": "Состав: сыр сулугуни, мука пшеничная, соль, масло оливковое, масло растительное, свекла маринованная (чеснок, уксус, сухая аджика, вода, сахар, соль), редис, карамелизированные грецкие орехи(орех, масло растительное, сахар), микс салатов (фриссе, романо, родиччо) малиновый соус (свежемороженая малина, сахар, гранатовое вино, вода, уксус бальзамический).",
+        "source_url": "https://hachapuriivino.moscow/menu/salati2/salat_s_zharenim_suluguni"
+      },
+      {
+        "name": "Салат с семгой и мандариновой заправкой",
+        "price_minor": 54000,
+        "portion_weight_g": 170.0,
+        "description": "Состав: семга слабосоленая, микс салатов (фриссе, романо, родиччо), огурец, сельдерей, мандариновая заправка (мандарин, сахар, перец чили, масло оливковое, уксус винный, соевый соус), оливковое масло, соль, перец черный.",
+        "source_url": "https://hachapuriivino.moscow/menu/salati2/salat_s_semgoi_i_mandarinovoi_zapravkoi1"
+      },
+      {
+        "name": "Салат с курицей и соусом киндзмари",
+        "price_minor": 47700,
+        "portion_weight_g": 200.0,
+        "description": "Состав: соль, масло оливковое, куриное филе (красное масло, соль, перец), укроп, томаты, соус красное масло (томатная паста, масло растительное), соус киндзмари (уксус винный, соль, сахар, масло растительное, чеснок, грецкий орех, кинза, вода), слива, микс салатов (айсберг, романо, лолло-россо), петрушка, перец черный молотый, масло растительное, масло оливковое.",
+        "source_url": "https://hachapuriivino.moscow/menu/salati2/salat_s_kuritsei_i_sousom_kindzmari"
+      },
+      {
+        "name": "Салат с уткой и соусом киндзмари",
+        "price_minor": 47700,
+        "portion_weight_g": 200.0,
+        "description": "Состав: микс салатов (айсберг, романо, лолло-россо), кинза, укроп, петрушка, слива, томаты, соль, перец чёрный молотый, масло оливковое, масло оливковое, томатная паста, утиная грудка, кинза, уксус винный, чеснок, вода, орех грецкий.",
+        "source_url": "https://hachapuriivino.moscow/menu/salati2/salat_s_utkoi_i_sousom_kindzmari1"
+      },
+      {
+        "name": "Цыпленок чкмерули",
+        "price_minor": 65000,
+        "portion_weight_g": 270.0,
+        "description": "Состав: куриный шашлык, масло растительное, кинза, укроп, грецкий орех молотый Соус на цыпленка: чеснок, кориандр, масло растительное, сливки 22%, хмели-сунели, соль, соль сванская. Подается с лавашом (вода, мука пшеничная, сахар, соль, дрожжи, кефир).",
+        "source_url": "https://hachapuriivino.moscow/menu/goryachie_blyuda2/tsiplenok_chkmeruli1"
+      },
+      {
+        "name": "Ташмиджаби",
+        "price_minor": 32200,
+        "portion_weight_g": 270.0,
+        "description": "Состав: картофель, сливки 10%, масло сливочное, соль сванская, сыр имеретинский, сыр сулугуни, сыр копченый сулугуни, соус зеленое масло (масло растительное, петрушка, укроп).",
+        "source_url": "https://hachapuriivino.moscow/menu/goryachie_blyuda2/tashmidzhabi1"
+      },
+      {
+        "name": "Хинкали с бараниной",
+        "price_minor": 10200,
+        "portion_weight_g": 90.0,
+        "description": "Состав: тесто (мука, соль, вода), баранина, бараний курдюк, лук, кинза, кондари, перец черный.",
+        "source_url": "https://hachapuriivino.moscow/menu/khinkali2/khinkali_s_baraninoi2"
+      },
+      {
+        "name": "Хинкали с говядиной-свининой",
+        "price_minor": 8700,
+        "portion_weight_g": 90.0,
+        "description": "Состав: тесто (вода, мука, соль), свиная шея, говядина, лук репчатый, кинза, черный перец, кориандр, соль.",
+        "source_url": "https://hachapuriivino.moscow/menu/khinkali2/khinkali_s_govyadinoisvininoi1"
+      },
+      {
+        "name": "Хинкали с растительным мясом",
+        "price_minor": 9700,
+        "portion_weight_g": 80.0,
+        "description": "Состав: тесто (мука, вода, соль), соевый фарш, кинза, репчатый лук, сванская соль, черный перец.",
+        "source_url": "https://hachapuriivino.moscow/menu/khinkali2/khinkali_s_rastitelnim_myasom2"
+      },
+      {
+        "name": "Хинкали с уткой",
+        "price_minor": 10200,
+        "portion_weight_g": 90.0,
+        "description": "Состав: тесто (мука, соль, вода), утиная грудка, лук репчатый, перец черный, соль сванская.",
+        "source_url": "https://hachapuriivino.moscow/menu/khinkali2/khinkali_s_utkoi"
+      },
+      {
+        "name": "Хинкали с семгой",
+        "price_minor": 11800,
+        "portion_weight_g": 90.0,
+        "description": "Состав: тесто (мука, вода, соль), сёмга, лук жареный, соль, черный перец, укроп.",
+        "source_url": "https://hachapuriivino.moscow/menu/khinkali2/khinkali_s_semgoi1"
+      },
+      {
+        "name": "Хинкали с вёшенками",
+        "price_minor": 9700,
+        "portion_weight_g": 80.0,
+        "description": "Состав: тесто (мука, соль, вода), вешенки, лук репчатый, масло растительное, перец черный.",
+        "source_url": "https://hachapuriivino.moscow/menu/khinkali2/khinkali_s_vyoshenkami"
+      },
+      {
+        "name": "Хинкали с сулугуни",
+        "price_minor": 9800,
+        "portion_weight_g": 90.0,
+        "description": "Состав: тесто (мука, соль, вода), сыр сулугуни, сыр имеретинский, сметана, кинза.",
+        "source_url": "https://hachapuriivino.moscow/menu/khinkali2/khinkali_s_suluguni2"
+      },
+      {
+        "name": "Аджика",
+        "price_minor": 11000,
+        "portion_weight_g": 50.0,
+        "description": "Состав: томаты, томатная паста, перец болгарский, перец чили, кинза, чеснок, сухая аджика, соль, масло растительное, сахар.",
+        "source_url": "https://hachapuriivino.moscow/menu/sousi2/adzhika2"
+      },
+      {
+        "name": "Ткемали",
+        "price_minor": 9000,
+        "portion_weight_g": 50.0,
+        "description": "Состав: красная слива ткемали, ткемали концентрат, сухая аджика, укроп, чеснок, соль, сахар, вода, черная смородина.",
+        "source_url": "https://hachapuriivino.moscow/menu/sousi2/tkemali"
+      },
+      {
+        "name": "Сливочный с мятой",
+        "price_minor": 8700,
+        "portion_weight_g": 50.0,
+        "description": "Состав: сметана, соль, мята свежая, кинза, чеснок.",
+        "source_url": "https://hachapuriivino.moscow/menu/sousi2/slivochnii_s_myatoi1"
+      },
+      {
+        "name": "Наршараб",
+        "price_minor": 9500,
+        "portion_weight_g": 50.0,
+        "description": "Состав: гранатовый сок, сахар.",
+        "source_url": "https://hachapuriivino.moscow/menu/sousi2/narsharab2"
+      },
+      {
+        "name": "Сацебели",
+        "price_minor": 8500,
+        "portion_weight_g": 50.0,
+        "description": "Состав: томаты, аджика сухая, соль, кинза, вода.",
+        "source_url": "https://hachapuriivino.moscow/menu/sousi2/satsebeli2"
+      },
+      {
+        "name": "Дзадзики",
+        "price_minor": 8300,
+        "portion_weight_g": 50.0,
+        "description": "Состав: мацони, лимонный сок, огурцы свежие, чеснок, соль, оливковое масло.",
+        "source_url": "https://hachapuriivino.moscow/menu/sousi2/dzadziki1"
+      },
+      {
+        "name": "Сметана",
+        "price_minor": 8000,
+        "portion_weight_g": 50.0,
+        "description": "Состав: сметана.",
+        "source_url": "https://hachapuriivino.moscow/menu/sousi2/smetana2"
+      },
+      {
+        "name": "Мацони",
+        "price_minor": 8500,
+        "portion_weight_g": 50.0,
+        "description": "Состав: молоко, закваска.",
+        "source_url": "https://hachapuriivino.moscow/menu/sousi2/matsoni1"
+      },
+      {
+        "name": "Чурчхела",
+        "price_minor": 42700,
+        "portion_weight_g": 100.0,
+        "description": "Состав: ядра орехов (фундук/миндаль/грецкий орех), сок-пюре (виноград, гранат, абрикос, яблоко), кукурузная мука.",
+        "source_url": "https://hachapuriivino.moscow/menu/deserti2/churchkhela2"
+      },
+      {
+        "name": "Пахлава",
+        "price_minor": 28000,
+        "portion_weight_g": 120.0,
+        "description": "Состав: слоеное тесто (вода, мука пшеничная,соль, сахар, растительное масло, сливочное масло), корица, мед, грецкий орех, мука пшеничная, мука кукурузная, сливочное масло, сахар.",
+        "source_url": "https://hachapuriivino.moscow/menu/deserti2/pakhlava2"
+      },
+      {
+        "name": "Грушевый пирог",
+        "price_minor": 39500,
+        "portion_weight_g": 120.0,
+        "description": "Состав: крем (яйцо куриное, сливочный сыр, сливки 33%, сахар, крахмал), тесто (яйцо куриное, сахар, печенье, сливочное масло) штрейзель (сахар, мука, сливочное масло, грецкий орех, цедра апельсина), груша натертая.",
+        "source_url": "https://hachapuriivino.moscow/menu/deserti2/grushevii_pirog2"
+      },
+      {
+        "name": "Медовик",
+        "price_minor": 36000,
+        "portion_weight_g": 120.0,
+        "description": "Состав: корж (яйцо, сода, сахар, пшеничная мука, мёд, сливочное масло), сливочный крем (сливки, сгущенное молоко, сметана), карамелизированный грецкий орех.",
+        "source_url": "https://hachapuriivino.moscow/menu/deserti2/medovik1"
+      }
+    ]
+  },
+  {
+    "name": "THE БЫК",
+    "address": "Москва, Страстной бульвар, 8А",
+    "location": {
+      "latitude": 55.7662994,
+      "longitude": 37.6107345
+    },
+    "cuisines": [
+      "european"
+    ],
+    "website": "https://thebull.ru/wp-content/menu/menu_21092026.pdf",
+    "source_url": "https://thebull.ru/wp-content/menu/menu_21092026.pdf",
+    "source_file": "tmp/pdfs/thebull-menu.pdf",
+    "source_kind": "pdf",
+    "items": [
+      {
+        "name": "Стейк фланк",
+        "price_minor": 70000,
+        "source_page": 1
+      },
+      {
+        "name": "Стейк бавет",
+        "price_minor": 70000,
+        "source_page": 1
+      },
+      {
+        "name": "Стейк клод",
+        "price_minor": 70000,
+        "source_page": 1
+      },
+      {
+        "name": "Спайдер стейк",
+        "price_minor": 70000,
+        "source_page": 1
+      },
+      {
+        "name": "Вителло тоннато",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Баклажаны в панировке",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Куриные стрипсы",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Креветки в кляре",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Чесночные гренки",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Крылья куриные",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Тартар из авокадо с креветками",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Мясное плато",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Сырное плато",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Карпаччо денвер",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Сырные крокеты с халапеньо",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Чоризо",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Баварская",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Маргарита",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Сырная",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Пицца Цезарь",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат буррата с баклажанами",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат зелёный",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат с печёной тыквой и фетой",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат с ростбифом",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат с креветками и соусом манго",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Стейк-салат",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Тёплый салат с цыплёнком",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат томаты со страчателлой",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Пастрами салат",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат Цезарь с курицей",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат Цезарь с креветками",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Витаминный салат",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Греческий салат",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат капрезе",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Салат Бык-тейсти",
+        "price_minor": 40000,
+        "source_page": 2
+      },
+      {
+        "name": "Бифштекс 4 сыра",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Стейк из индейки",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Шашлык из курицы",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Шашлык из свиной шеи",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Медальоны из свинины",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Говяжьи колбаски",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Свиные колбаски",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Куриные колбаски",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Колбаска из индейки",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Люля-кебаб из говядины",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Люля-кебаб из индейки",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Кесадилья с говядиной",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Бургер THE БЫК",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Бургер Jack Daniel's",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Бургер Вишнёвый бизон",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Чизбургер",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Бургер с креветками",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Классический борщ",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Крем-суп сырный",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Том ям",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Бульон куриный",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Гаспачо со страчателлой",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Окрошка на мацони с бриcкетом",
+        "price_minor": 40000,
+        "source_page": 3
+      },
+      {
+        "name": "Брокколи",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Овощи гриль",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Рис с овощами",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Картофель батат фри",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Картофель фри",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Картофель фри с пармезаном",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Картофель по-деревенски",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Картофель диппер",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Картофельное пюре",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Картофельные стрипсы",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Бефстроганов",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Свиные рёбра терияки",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Свиные рёбра барбекю",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Свиные рёбра Jack Daniel's",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Говядина по-тайски",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Говяжьи котлеты с картофельным пюре",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Говядина по-домашнему со стрипсами",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Свиные рёбра BBQ персик",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Чизкейк баскский",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Фисташковый рулет",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Шоколадный фондан",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Перечный медовик",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Мороженое",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Панна-котта с клубничным соусом",
+        "price_minor": 40000,
+        "source_page": 4
+      },
+      {
+        "name": "Стейк NY травяной",
+        "price_minor": 50000,
+        "source_page": 5
+      },
+      {
+        "name": "Шашлык из говядины",
+        "price_minor": 65000,
+        "source_page": 5
+      },
+      {
+        "name": "Свиной томагавк",
+        "price_minor": 65000,
+        "source_page": 5
+      },
+      {
+        "name": "Стейк рибай травяной",
+        "price_minor": 80000,
+        "source_page": 5
+      },
+      {
+        "name": "Стейк из форели",
+        "price_minor": 80000,
+        "source_page": 5
+      },
+      {
+        "name": "Стейк бавет зерновой",
+        "price_minor": 95000,
+        "source_page": 5
+      },
+      {
+        "name": "Стейк стриплойн зерновой",
+        "price_minor": 100000,
+        "source_page": 5
+      },
+      {
+        "name": "Стейк филе миньон",
+        "price_minor": 150000,
+        "source_page": 5
+      },
+      {
+        "name": "Рибай Black Angus",
+        "price_minor": 150000,
+        "source_page": 5
+      },
+      {
+        "name": "Стейк рибай зерновой",
+        "price_minor": 200000,
+        "source_page": 5
+      },
+      {
+        "name": "Паста болоньезе",
+        "price_minor": 50000,
+        "source_page": 5
+      },
+      {
+        "name": "Тартар из форели",
+        "price_minor": 50000,
+        "source_page": 5
+      },
+      {
+        "name": "Тартар из говядины",
+        "price_minor": 50000,
+        "source_page": 5
+      },
+      {
+        "name": "Креветки пиль-пиль",
+        "price_minor": 55000,
+        "source_page": 5
+      },
+      {
+        "name": "Паста с томлёной щекой",
+        "price_minor": 60000,
+        "source_page": 5
+      },
+      {
+        "name": "Щёки с картофельным пюре",
+        "price_minor": 60000,
+        "source_page": 5
+      },
+      {
+        "name": "Свиная рулька",
+        "price_minor": 65000,
+        "source_page": 5
+      },
+      {
+        "name": "Утка конфи с бататом",
+        "price_minor": 65000,
+        "source_page": 5
+      },
+      {
+        "name": "Сэндвич с брискетом и соусом чипотле",
+        "price_minor": 70000,
+        "source_page": 5
+      },
+      {
+        "name": "Брискет",
+        "price_minor": 100000,
+        "source_page": 5
+      }
+    ]
+  }
+]
