@@ -170,3 +170,70 @@ def test_smoke_public_forbidden_is_immediate_and_never_echoes_token(smoke_gatewa
     with pytest.raises(ValueError) as bad_header:
         headers({}, {"GASTRO_API_KEY": secret_fixture + "\n"})
     assert secret_fixture not in str(bad_header.value)
+
+
+@pytest.fixture
+def smoke_catalog_sample():
+    path = Path(__file__).resolve().parents[1] / "scripts" / "smoke.py"
+    source = ast.parse(path.read_text())
+    functions = [node for node in source.body if isinstance(node, ast.FunctionDef) and node.name == "catalog_sample"]
+    namespace = {}
+    exec(compile(ast.Module(body=functions, type_ignores=[]), str(path), "exec"), namespace)
+    return namespace["catalog_sample"]
+
+
+@pytest.mark.parametrize("count", [1, 3])
+def test_smoke_accepts_real_catalog_without_five_demo_restaurants(smoke_catalog_sample, count):
+    restaurants = [{"id": f"restaurant-{index}", "active": True, "active_menu_version_id": f"menu-{index}"}
+                   for index in range(count)]
+    dish = {"id": "real-menu-item", "name": "Рыба на гриле"}
+
+    def api_call(method, path, **kwargs):
+        assert method == "GET"
+        if path == "/restaurants":
+            return {"items": restaurants, "total": count}
+        assert path == "/restaurants/restaurant-0/menu"
+        return {"items": [dish]}
+
+    assert smoke_catalog_sample(api_call) == (restaurants[0], dish)
+
+
+@pytest.mark.parametrize("restaurants", [[], [
+    {"id": "unpublished", "active": True, "active_menu_version_id": None},
+    {"id": "empty", "active": True, "active_menu_version_id": "menu-empty"},
+    {"id": "inactive", "active": False, "active_menu_version_id": "menu-inactive"},
+]])
+def test_smoke_explains_missing_published_dishes(smoke_catalog_sample, restaurants):
+    visited = []
+
+    def api_call(method, path, **kwargs):
+        visited.append(path)
+        if path == "/restaurants":
+            return {"items": restaurants, "total": len(restaurants)}
+        assert path == "/restaurants/empty/menu"
+        return {"items": []}
+
+    with pytest.raises(AssertionError, match="at least one active restaurant with a nonempty published menu"):
+        smoke_catalog_sample(api_call)
+    assert "/restaurants/unpublished/menu" not in visited
+    assert "/restaurants/inactive/menu" not in visited
+
+
+def test_smoke_searches_later_pages_for_published_menu(smoke_catalog_sample):
+    unpublished = [{"id": f"unpublished-{index}", "active": True, "active_menu_version_id": None}
+                   for index in range(100)]
+    restaurant = {"id": "published", "active": True, "active_menu_version_id": "published-menu"}
+    dish = {"id": "published-dish", "name": "Обед"}
+    offsets = []
+
+    def api_call(method, path, **kwargs):
+        if path == "/restaurants":
+            offset = kwargs["params"]["offset"]
+            offsets.append(offset)
+            assert kwargs["params"]["limit"] == 100
+            return {"items": unpublished if offset == 0 else [restaurant], "total": 101}
+        assert path == "/restaurants/published/menu"
+        return {"items": [dish]}
+
+    assert smoke_catalog_sample(api_call) == (restaurant, dish)
+    assert offsets == [0, 100]

@@ -26,6 +26,22 @@ def require_gateway_access(response):
         raise AssertionError("Public gateway rejected X-API-Key (HTTP 403); set a valid GASTRO_API_KEY")
 
 
+def catalog_sample(api_call):
+    offset = 0
+    while True:
+        page = api_call("GET", "/restaurants", params={"limit": 100, "offset": offset})
+        for restaurant in page["items"]:
+            if not restaurant["active"] or not restaurant["active_menu_version_id"]:
+                continue
+            menu = api_call("GET", f"/restaurants/{restaurant['id']}/menu")
+            if menu["items"]:
+                return restaurant, menu["items"][0]
+        offset += len(page["items"])
+        if not page["items"] or offset >= page["total"]:
+            break
+    raise AssertionError("Catalog needs at least one active restaurant with a nonempty published menu")
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--url", default="http://127.0.0.1:8080")
 parser.add_argument("--public", action="store_true", help="Verify the public HTTPS gateway without private service health endpoints")
@@ -195,17 +211,15 @@ try:
     if args.public:
         # Probe owner-scoped recommendation routes without starting inference.
         assert isinstance(call("GET", "/me/feed")["items"], list)
-    restaurants = call("GET", "/restaurants")["items"]
-    assert len(restaurants) >= 5
-    menu = call("GET", f"/restaurants/{restaurants[0]['id']}/menu")
-    item = menu["items"][0]
+    restaurant, item = catalog_sample(call)
     evidence = call("GET", f"/evidence/{item['evidence_ids'][0]}")
     assert evidence["restaurant_id"] == item["restaurant_id"]
     print("PASS auth, catalog, versioned menu and source evidence")
 
     deadline = time.monotonic() + 180
     while True:
-        response = client.post("/search", json={"query": "хочу хинкали", "constraints": {}, "limit": 5})
+        response = client.post("/search", json={"query": item["name"],
+            "constraints": {"restaurant_id": restaurant["id"], "currency": item["currency"]}, "limit": 5})
         if response.status_code == 200:
             break
         if response.status_code != 503 or time.monotonic() > deadline:
@@ -213,11 +227,11 @@ try:
         time.sleep(2)
     search = response.json()
     assert "TEST" not in search["embedding_model"] and search["items"]
-    assert any("хинкали" in hit["item"]["name"].casefold() for hit in search["items"])
+    assert any(hit["item"]["id"] == item["id"] for hit in search["items"]), "Published sample dish is absent from semantic search"
     print("PASS real semantic retrieval:", search["embedding_model"], "top dishes:", ", ".join(h["item"]["name"] for h in search["items"][:3]))
 
     call("PATCH", "/me/profile", json={"allergies": [{"code": "milk"}], "daily_calories_target": 2200})
-    filtered = call("POST", "/search", json={"query": "что-нибудь вкусное", "constraints": {}, "limit": 20})
+    filtered = call("POST", "/search", json={"query": item["name"], "constraints": {"currency": item["currency"]}, "limit": 20})
     for hit in filtered["items"]:
         assert any(a["code"] == "milk" and a["status"] == "declared_absent" and a.get("evidence_id") for a in hit["item"]["allergens"])
     call("PATCH", "/me/profile", json={"allergies": []})
@@ -240,34 +254,42 @@ try:
     print("PASS fractional diary, exact calories, idempotency and daily summary")
 
     if args.agents:
-        request = {"mode": "dish_search", "query": "Хочу хинкали, предложи один вариант", "constraints": {"budget_minor": 100000}, "max_options": 1}
+        budget = max(item["price_minor"] * 3, 100)
+        constraints = {"restaurant_id": restaurant["id"], "budget_minor": budget, "currency": item["currency"]}
+        request = {"mode": "dish_search", "query": f"Найди блюдо {item['name']}, предложи один вариант", "constraints": constraints, "max_options": 1}
         run = call("POST", "/recommendations", expected=202, json=request, headers={"Idempotency-Key": str(uuid4())})
         result = wait("/recommendations/" + run["id"], {"completed"}, limit=600, progress_label="live dish_search")
-        verify_ready_recommendation(result, budget_minor=100000)
+        verify_ready_recommendation(result, budget_minor=budget)
         option = result["result"]["options"][0]
-        assert any("хинкали" in i["name"].casefold() for i in option["items"])
+        assert any(selected["menu_item_id"] == item["id"] for selected in option["items"])
         print("PASS live GLM/LangGraph dish_search with validated menu, budget and evidence")
 
-        meal = {"mode": "meal_plan", "query": "Подбери обед из меню одного ресторана до 1000 рублей и 900 ккал; можно сочетать несколько блюд.",
-                "constraints": {"budget_minor": 100000, "max_calories_kcal": 900}, "max_options": 1}
+        calories = item["nutrition"]["calories_kcal"]
+        calorie_limit = max(calories * 3, 1) if calories is not None else None
+        meal_constraints = dict(constraints)
+        if calorie_limit is not None:
+            meal_constraints["max_calories_kcal"] = calorie_limit
+        meal = {"mode": "meal_plan", "query": f"Подбери приём пищи из меню этого ресторана, например {item['name']}; можно сочетать несколько блюд.",
+                "constraints": meal_constraints, "max_options": 1}
         run = call("POST", "/recommendations", expected=202, json=meal, headers={"Idempotency-Key": str(uuid4())})
         result = wait("/recommendations/" + run["id"], {"completed"}, limit=600, progress_label="live meal_plan")
-        verify_ready_recommendation(result, budget_minor=100000, calorie_limit=900)
+        verify_ready_recommendation(result, budget_minor=budget, calorie_limit=calorie_limit)
         print("PASS live GLM/LangGraph meal_plan with coherent restaurant, exact totals and evidence")
 
         if args.proactive:
+            assert calorie_limit is not None, "Proactive calorie-target smoke requires a published dish with known calories"
             proactive_cleanup_required = True
             call("PATCH", "/me/profile", json={"proactive_enabled": True, "timezone": daytime_timezone(),
-                "daily_calories_target": 2200, "default_budget_minor": 100000, "currency": "RUB"})
+                "daily_calories_target": max(2200, int(calorie_limit)), "default_budget_minor": budget, "currency": item["currency"]})
             result = wait_proactive_feed(args.proactive_timeout)
-            verify_ready_recommendation(result, budget_minor=100000, calorie_limit=2200)
+            verify_ready_recommendation(result, budget_minor=budget, calorie_limit=max(2200, int(calorie_limit)))
             print("PASS real scheduler-generated live GLM proactive recommendation with confirmed origin and evidence")
     else:
         if not args.public:
             health_response = client.get(args.url.rstrip("/") + "/health/recommendations")
             assert health_response.status_code == 200, "Recommendations health check failed"
             if not health_response.json()["llm_configured"]:
-                response = client.post("/recommendations", json={"mode": "dish_search", "query": "хинкали"}, headers={"Idempotency-Key": str(uuid4())})
+                response = client.post("/recommendations", json={"mode": "dish_search", "query": item["name"]}, headers={"Idempotency-Key": str(uuid4())})
                 assert response.status_code == 503 and response.json()["code"] == "llm_not_configured"
         print("SKIP live LLM inference (use --agents to exercise the configured provider)")
 

@@ -169,7 +169,11 @@ async def test_real_adapter_full_graph_tools_cross_services_and_no_secret_persis
                 result = await graph.run(RecommendationCreate(mode="dish_search", query="Хочу хинкали"))
     checked = RecommendationResult.model_validate(result)
     assert checked.outcome == "ready" and checked.options[0].total_price_minor == 75000
-    assert len(provider_requests) == 9
+    assert len(provider_requests) == 5
+    assert coordinator_count == 1
+    nutrition_requests = [request for request in provider_requests
+                          if json.loads(request.content)["tools"][0]["function"]["name"] == "calculate_meal"]
+    assert len(nutrition_requests) == 1
     assert {trace["agent"] for trace in traces} == {"coordinator", "search", "nutrition", "planner", "validator"}
     persisted = json.dumps({"result": result, "traces": traces}, ensure_ascii=False)
     assert TEST_KEY not in persisted and PRIVATE_REASONING not in persisted
