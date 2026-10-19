@@ -69,7 +69,11 @@ services:
     volumes:
       - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./deploy/docs:/usr/share/nginx/html:ro
-      - ./web:/usr/share/nginx/web:ro
+      - ./web/index.html:/usr/share/nginx/web/index.html:ro
+      - ./web/app.js:/usr/share/nginx/web/app.js:ro
+      - ./web/profile.js:/usr/share/nginx/web/profile.js:ro
+      - ./web/recommendations.js:/usr/share/nginx/web/recommendations.js:ro
+      - ./web/styles.css:/usr/share/nginx/web/styles.css:ro
     depends_on:
       catalog:
         condition: service_healthy

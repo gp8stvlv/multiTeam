@@ -199,6 +199,25 @@ async def test_empty_successful_search_is_no_matches():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("empty_search", [False, True])
+async def test_repeated_search_decisions_are_bounded_and_candidates_reach_planning(empty_search):
+    world = World()
+    world.empty_search = empty_search
+    model = ScriptedModel(decisions=[{"action": "search"}] * 10)
+    result, traces = await run_world(world, model=model)
+    assert result["outcome"] == ("no_matches" if empty_search else "ready")
+    assert sum(trace["agent"] == "search" for trace in traces) == 2
+    assert sum(name == "CoordinatorDecision" for name, _ in model.calls) == 2
+    assert sum(trace["agent"] == "nutrition" for trace in traces) == (0 if empty_search else 1)
+    assert sum(trace["agent"] == "planner" for trace in traces) == (0 if empty_search else 1)
+    assert any("action=" + ("finish" if empty_search else "nutrition") in trace["summary"]
+               for trace in traces if trace["agent"] == "coordinator")
+    if not empty_search:
+        assert result["options"][0]["total_price_minor"] == ITEM["price_minor"]
+        assert result["options"][0]["evidence_ids"] == [EVIDENCE_ID]
+
+
+@pytest.mark.asyncio
 async def test_empty_plan_after_finish_is_not_ready():
     result, _ = await run_world(World(), model=ScriptedModel(empty_plan=True))
     assert result["outcome"] == "no_matches"

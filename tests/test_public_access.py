@@ -68,7 +68,7 @@ def test_credentials_cannot_be_written_to_the_checkout():
 
 
 @pytest.mark.skipif(os.getenv("RUN_PUBLIC_NGINX_TESTS") != "1", reason="Set RUN_PUBLIC_NGINX_TESTS=1 to run real Docker Nginx")
-def test_real_nginx_gates_api_docs_and_never_proxies_denied_requests(tmp_path):
+def test_real_nginx_serves_public_site_and_gates_api_docs(tmp_path):
     access = tmp_path / "access"
     assert configure(access).returncode == 0
     key = (access / "team-key").read_text().strip()
@@ -85,7 +85,11 @@ def test_real_nginx_gates_api_docs_and_never_proxies_denied_requests(tmp_path):
         line for line in production.splitlines()
         if not line.strip().startswith(("ssl_", "http2 on;"))
     ).replace("listen 443 ssl default_server;", "listen 8080 default_server;")
-    transformed = transformed.replace("set $gateway gateway:80;", "set $gateway 127.0.0.1:8000;")
+    transformed = transformed.replace("set $gateway gateway:80;", "set $gateway 127.0.0.1:8001;")
+    gateway = (ROOT / "deploy/nginx.conf").read_text().replace("listen 80;", "listen 8001;")
+    for service, port in (("catalog", 8001), ("users", 8002), ("recommendations", 8003)):
+        gateway = gateway.replace(f"set ${service} {service}:{port};", f"set ${service} 127.0.0.1:8000;")
+    transformed += "\n" + gateway
     transformed += """
 map $http_authorization $test_jwt_seen {
     default false;
@@ -102,7 +106,6 @@ server {
     add_header X-Test-JWT $test_jwt_seen always;
     add_header X-Test-Basic $test_basic_seen always;
     add_header X-Test-Team-Key $http_x_api_key always;
-    location = / { return 302 /docs/; }
     location / { return 200 '{"ok":true}'; }
 }
 """
@@ -127,12 +130,16 @@ server {
         return result.stdout
 
     try:
+        static_mounts = []
+        for name in ("index.html", "app.js", "profile.js", "recommendations.js", "styles.css"):
+            static_mounts.extend(("--mount", f"type=bind,src={ROOT / 'web' / name},dst=/usr/share/nginx/web/{name},readonly"))
         docker("run", "-d", "--name", container,
                "-p", "127.0.0.1::8080", "-p", "127.0.0.1::80",
                "--mount", f"type=bind,src={configuration},dst=/etc/nginx/conf.d/default.conf,readonly",
                "--mount", f"type=bind,src={access / 'nginx'},dst=/etc/gastrogid,readonly",
                "--mount", f"type=bind,src={webroot},dst=/var/www/certbot,readonly",
-               "nginx:1.28-alpine")
+               "--mount", f"type=bind,src={ROOT / 'deploy/docs'},dst=/usr/share/nginx/html,readonly",
+               *static_mounts, "nginx:1.28-alpine")
         bindings = json.loads(docker("inspect", "--format", "{{json .NetworkSettings.Ports}}", container))
         address = "http://127.0.0.1:" + bindings["8080/tcp"][0]["HostPort"]
         clear_address = "http://127.0.0.1:" + bindings["80/tcp"][0]["HostPort"]
@@ -153,9 +160,10 @@ server {
 
             assert upstream_count() == 0
             for path, method in [("/health", "GET"), ("/api/v1/restaurants", "GET"),
-                                 ("/api/v1/auth/login", "POST"), ("/api/v1/auth/register", "POST")]:
+                                 ("/api/v1/auth/login", "POST"), ("/api/v1/auth/register", "POST"),
+                                 ("/api/v1/recommendations", "POST")]:
                 for headers in ({}, {"X-API-Key": "wrong"}, {"X-API-Key": key.swapcase()},
-                                {"Authorization": basic}):
+                                {"Authorization": basic}, {"Authorization": "Bearer test-user-token"}):
                     response = client.request(method, path, headers=headers)
                     assert response.status_code == 403
                     error = response.json()
@@ -163,14 +171,33 @@ server {
                     assert error["request_id"] and "details" in error
                     assert "www-authenticate" not in response.headers
             assert upstream_count() == 0
-            for path in ("/", "/docs/", "/docs/swagger-ui-bundle.js", "/openapi/catalog.json",
+            for path, status in (("/", 302), ("/app", 308)):
+                response = client.get(path)
+                assert response.status_code == status
+                assert httpx.URL(response.headers["location"]).path == "/app/"
+            for path, mime in (("/app/", "text/html"), ("/app/index.html", "text/html"),
+                               ("/app/app.js", "application/javascript"),
+                               ("/app/profile.js", "application/javascript"),
+                               ("/app/recommendations.js", "application/javascript"),
+                               ("/app/styles.css", "text/css")):
+                response = client.get(path)
+                assert response.status_code == 200, path
+                assert response.headers["content-type"].split(";")[0] == mime
+                assert "www-authenticate" not in response.headers
+                assert response.text == (ROOT / "web" / (path.rsplit("/", 1)[1] or "index.html")).read_text()
+            for path in ("/app/.env", "/app/package.json", "/app/dev-server.mjs", "/app/profile.test.mjs",
+                         "/app/recommendations.test.mjs",
+                         "/app/missing.js", "/app/missing-route", "/app/../.env", "/.git/config"):
+                assert client.get(path).status_code == 404
+            assert upstream_count() == 0
+            for path in ("/docs/", "/docs/assets/swagger-ui-bundle.js", "/openapi/catalog.json",
                          "/openapi/users.json", "/openapi/recommendations.json"):
                 response = client.get(path)
                 assert response.status_code == 401
                 assert response.headers["www-authenticate"].startswith("Basic ")
             assert upstream_count() == 0
-            assert client.get("/api/v1/internal/users-contexts").status_code == 404
-            assert client.get("/health/catalog").status_code == 404
+            for path in ("/api/v1/internal", "/api/v1/internal/users-contexts", "/health/catalog", "/ready/catalog"):
+                assert client.get(path).status_code == 404
             assert upstream_count() == 0
 
             allowed = {"X-API-Key": key}
@@ -181,16 +208,15 @@ server {
             assert response.headers["x-test-basic"] == "false"
             assert "x-test-team-key" not in response.headers
             expected = 1
-            for path in ("/docs/", "/openapi/catalog.json", "/openapi/users.json", "/openapi/recommendations.json"):
+            for path in ("/docs/", "/docs/assets/swagger-ui-bundle.js", "/openapi/catalog.json",
+                         "/openapi/users.json", "/openapi/recommendations.json"):
                 for headers in (allowed, {"Authorization": basic}):
                     response = client.get(path, headers=headers)
                     assert response.status_code == 200
-                    assert response.headers["x-test-basic"] == "false"
                     assert "x-test-team-key" not in response.headers
-                    expected += 1
-            response = client.get("/", headers={"Authorization": basic})
-            assert response.status_code == 302 and response.headers["x-test-basic"] == "false"
-            expected += 1
+                    if path.startswith("/openapi/"):
+                        assert response.headers["x-test-basic"] == "false"
+                        expected += 1
             assert upstream_count() == expected
         with httpx.Client(base_url=clear_address, timeout=5, follow_redirects=False) as clear:
             assert clear.get("/.well-known/acme-challenge/test-challenge").text == "public-acme-test"

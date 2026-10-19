@@ -1,7 +1,8 @@
 import { profilePatch } from './profile.js';
+import { isFinishedRun, pollRecommendation } from './recommendations.js';
 
 const API_BASE = '/api/v1';
-const state = { page: 'home', mode: 'dish_search', apiKey: '', token: '', email: '', role: '', authMode: 'login', demo: true, authRequired: true, restaurants: [], restaurantTotal: 0, demoCount: 0, menuItems: [], resultItems: [], feedback: new Map(), pollId: 0 };
+const state = { page: 'home', mode: 'dish_search', apiKey: '', token: '', email: '', role: '', authMode: 'login', demo: true, authRequired: true, restaurants: [], restaurantTotal: 0, demoCount: 0, menuItems: [], resultItems: [], feedback: new Map(), pollId: 0, searchController: null, pendingRun: null };
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const money = (minor, currency = 'RUB') => minor == null ? 'Цена не указана' : new Intl.NumberFormat('ru-RU', { style: 'currency', currency, maximumFractionDigits: 0 }).format(minor / 100);
@@ -16,14 +17,14 @@ const icons = ['🥟', '🥗', '🍔', '🍜', '🍝', '🍽️'];
 const today = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; };
 
 class ApiError extends Error { constructor(message, status = 0) { super(message); this.status = status; } }
-async function api(path, { method = 'GET', body, headers = {} } = {}) {
+async function api(path, { method = 'GET', body, headers = {}, signal } = {}) {
   const url = `${API_BASE}${path}`;
   const requestHeaders = { Accept: 'application/json', ...headers };
   if (body !== undefined) requestHeaders['Content-Type'] = 'application/json';
   if (state.apiKey) requestHeaders['X-API-Key'] = state.apiKey;
   if (state.token) requestHeaders.Authorization = `Bearer ${state.token}`;
   let response;
-  try { response = await fetch(url, { method, headers: requestHeaders, body: body === undefined ? undefined : JSON.stringify(body) }); }
+  try { response = await fetch(url, { method, headers: requestHeaders, signal, body: body === undefined ? undefined : JSON.stringify(body) }); }
   catch { throw new ApiError('Не удалось связаться с API. Попробуйте ещё раз позже.'); }
   let payload = null;
   try { payload = await response.json(); } catch { /* A gateway may return an empty or non-JSON error. */ }
@@ -117,6 +118,7 @@ async function loadRestaurants() {
     state.menuItems = []; $('#menu-section').classList.add('hidden');
   } catch (error) {
     if (error.status === 401) {
+      cancelSearch();
       state.token = ''; state.apiKey = ''; state.email = ''; state.role = ''; state.feedback = new Map(); $('#account-label').textContent = 'Войти';
       state.restaurants = []; state.restaurantTotal = 0; state.demoCount = 0; state.demo = true; state.authRequired = true; setConnection('auth');
       renderRestaurants();
@@ -164,7 +166,7 @@ function renderHits(items, note = '') {
 }
 function renderRun(run) {
   if (run.status === 'failed') return errorBox(run.error?.message || 'Подбор завершился ошибкой.');
-  if (run.status !== 'completed') return `<div class="notice-box"><strong>Подбираем варианты…</strong>Задание ${escapeHtml(run.status)}. Результат появится автоматически.</div>`;
+  if (run.status !== 'completed') return `<div class="notice-box"><strong>${run.status === 'queued' ? 'Запрос в очереди…' : 'Агенты подбирают блюда…'}</strong>Подбор может занять несколько минут. Результат появится автоматически; повторно отправлять запрос не нужно.</div>`;
   const result = run.result;
   if (!result) return empty('Нет результата', 'Задание завершено без данных.');
   const warnings = result.warnings?.length ? `<div class="result-warnings">${result.warnings.map(escapeHtml).join(' · ')}</div>` : '';
@@ -174,39 +176,83 @@ function renderRun(run) {
   if (!options.length) return `${warnings}${empty('Реальных вариантов нет', 'В текущем каталоге не нашлось подходящих блюд из настоящих меню.')}`;
   return `${warnings}<p class="result-info">${options.length} вариантов · проверенные блюда из меню</p>${options.map((option) => `<article class="option-card"><div class="option-top"><div><span class="section-kicker">ВАРИАНТ ${escapeHtml(option.rank)}</span><h3>${escapeHtml(option.restaurant?.name || 'Ресторан')}</h3></div><span class="option-price">${escapeHtml(money(option.total_price_minor, option.currency || 'RUB'))}</span></div><p>${escapeHtml(option.restaurant?.address || '')}</p><ul>${(option.items || []).map((item) => `<li><span>${escapeHtml(item.name)} · ${escapeHtml(item.portions)} порц.</span>${feedbackButtons(item.dish_id, item.name)}</li>`).join('')}</ul><p>${escapeHtml((option.reasons || []).join(' · '))}</p><p>${escapeHtml(totalNutritionText(option.nutrition))}</p>${option.warnings?.length ? `<div class="result-warnings">${option.warnings.map(escapeHtml).join(' · ')}</div>` : ''}</article>`).join('')}`;
 }
-async function waitForRun(id, requestId) {
-  for (let attempt = 0; attempt < 55 && state.pollId === requestId; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 1600));
+function updateSearchButton() {
+  const button = $('#search-submit');
+  button.disabled = Boolean(state.pendingRun);
+  button.innerHTML = state.pendingRun ? 'Ожидаем результат…' : 'Подобрать <span aria-hidden="true">→</span>';
+}
+function cancelSearch() {
+  state.searchController?.abort();
+  state.searchController = null;
+  state.pendingRun = null;
+  state.resultItems = [];
+  $('#results-section').classList.add('hidden');
+  state.pollId++;
+  updateSearchButton();
+}
+function pausedRun(message) {
+  return `<div class="notice-box"><strong>Ожидание приостановлено</strong>${escapeHtml(message)}<p>Можно продолжить проверять тот же запрос, без повторного запуска агентов.</p><button type="button" class="outline-button" id="resume-run">Продолжить ожидание</button></div>`;
+}
+async function waitForRun(run, requestId, signal) {
+  try {
+    const outcome = await pollRecommendation({
+      run, signal,
+      load: (id, signal) => api(`/recommendations/${encodeURIComponent(id)}`, { signal }),
+      onUpdate: (updated) => {
+        state.pendingRun = isFinishedRun(updated) ? null : updated;
+        showResults(renderRun(updated), false);
+      },
+    });
     if (state.pollId !== requestId) return;
-    try {
-      const run = await api(`/recommendations/${encodeURIComponent(id)}`);
-      showResults(renderRun(run), false);
-      if (['completed', 'failed'].includes(run.status)) return;
-    } catch (error) { showResults(errorBox(error.message), false); return; }
+    if (outcome.status === 'paused') showResults(pausedRun('Сервер ещё обрабатывает запрос.'), false);
+  } catch (error) {
+    if (state.pollId !== requestId || signal.aborted) return;
+    showResults(pausedRun(error.message), false);
   }
-  if (state.pollId === requestId) showResults(empty('Подбор ещё идёт', 'Попробуйте повторить запрос через некоторое время.'), false);
+}
+async function resumeRun() {
+  if (!state.pendingRun || (state.searchController && !state.searchController.signal.aborted)) return;
+  const run = state.pendingRun;
+  const requestId = ++state.pollId;
+  state.searchController = new AbortController();
+  showResults(renderRun(run), false);
+  await waitForRun(run, requestId, state.searchController.signal);
+  if (state.pollId === requestId) { state.searchController = null; updateSearchButton(); }
 }
 async function search(event) {
   event.preventDefault(); const query = $('#query-input').value.trim(); if (!query) return;
+  if (state.pendingRun || state.searchController) { toast('Предыдущий запрос ещё выполняется. Дождитесь результата или начните новый поиск.'); return; }
   const limits = constraints(); const button = $('#search-submit');
   if (state.demo) {
     showResults(empty('Каталог API недоступен', state.authRequired ? 'Войдите в аккаунт и повторите запрос.' : 'Проверьте подключение к API и повторите запрос.'));
     return;
   }
   if (state.mode === 'meal_plan' && !state.token) { openModal('auth-modal'); toast('Войдите, чтобы собрать приём пищи.'); return; }
-  button.disabled = true; button.textContent = 'Ищем…';
+  cancelSearch();
+  const requestId = state.pollId;
+  const controller = new AbortController();
+  state.searchController = controller;
+  button.disabled = true; button.textContent = state.mode === 'meal_plan' ? 'Запускаем агентов…' : 'Ищем…';
+  state.resultItems = [];
+  showResults('<div class="notice-box">Отправляем запрос…</div>');
   try {
     if (state.mode === 'meal_plan') {
-      const run = await api('/recommendations', { method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() }, body: { mode: state.mode, query, constraints: limits } });
-      showResults(renderRun(run));
-      const requestId = ++state.pollId;
-      if (!['completed', 'failed'].includes(run.status)) waitForRun(run.id, requestId);
+      const run = await api('/recommendations', { method: 'POST', signal: controller.signal, headers: { 'Idempotency-Key': crypto.randomUUID() }, body: { mode: state.mode, query, constraints: limits } });
+      if (state.pollId !== requestId) return;
+      showResults(renderRun(run), false);
+      if (!isFinishedRun(run)) {
+        state.pendingRun = run;
+        await waitForRun(run, requestId, controller.signal);
+      }
     } else {
-      const result = await api('/search', { method: 'POST', body: { query, constraints: limits, limit: 12 } });
-      showResults(`${result.warnings?.length ? `<div class="result-warnings">${result.warnings.map(escapeHtml).join(' · ')}</div>` : ''}${renderHits((result.items || []).filter((hit) => !hit.restaurant?.is_demo && !hit.item?.is_demo))}`);
+      const result = await api('/search', { method: 'POST', signal: controller.signal, body: { query, constraints: limits, limit: 12 } });
+      if (state.pollId !== requestId) return;
+      showResults(`${result.warnings?.length ? `<div class="result-warnings">${result.warnings.map(escapeHtml).join(' · ')}</div>` : ''}${renderHits((result.items || []).filter((hit) => !hit.restaurant?.is_demo && !hit.item?.is_demo))}`, false);
     }
-  } catch (error) { showResults(errorBox(error.message)); }
-  finally { button.disabled = false; button.innerHTML = 'Подобрать <span aria-hidden="true">→</span>'; }
+  } catch (error) { if (state.pollId === requestId) showResults(errorBox(error.message), false); }
+  finally {
+    if (state.pollId === requestId) { state.searchController = null; updateSearchButton(); }
+  }
 }
 async function addDiary(id) {
   if (!state.token) { openModal('auth-modal'); toast('Войдите, чтобы вести дневник.'); return; }
@@ -293,6 +339,7 @@ async function auth(event) {
     if (!apiKey) throw new ApiError('Введите командный API-токен.');
     state.apiKey = apiKey;
     const result = await api(`/auth/${state.authMode}`, { method: 'POST', body: { email, password } });
+    cancelSearch();
     state.token = result.access_token; state.email = result.user?.email || email; state.role = result.user?.role || '';
     state.feedback = new Map(); syncFeedbackButtons();
     $('#account-label').textContent = state.email.split('@')[0];
@@ -316,11 +363,12 @@ document.addEventListener('click', (event) => {
   if (target.dataset.openAuth !== undefined) { openModal('auth-modal'); return; }
   if (target.dataset.close) { closeModal(target.dataset.close); return; }
   if (target.dataset.suggestion) { $('#query-input').value = target.dataset.suggestion; $('#query-input').focus(); return; }
-  if (target.dataset.mode) { state.mode = target.dataset.mode; document.querySelectorAll('.mode').forEach((item) => item.classList.toggle('active', item === target)); return; }
+  if (target.dataset.mode) { if (state.mode === target.dataset.mode) return; cancelSearch(); state.mode = target.dataset.mode; $('#mode-help').textContent = state.mode === 'meal_plan' ? 'Агенты подберут сочетание блюд с учётом профиля. Это может занять несколько минут.' : 'Быстрый поиск по меню без запуска агентов.'; document.querySelectorAll('.mode').forEach((item) => item.classList.toggle('active', item === target)); return; }
   if (target.dataset.authMode) { state.authMode = target.dataset.authMode; document.querySelectorAll('[data-auth-mode]').forEach((item) => item.classList.toggle('active', item === target)); $('#auth-submit').textContent = state.authMode === 'login' ? 'Войти' : 'Зарегистрироваться'; $('#auth-title').textContent = state.authMode === 'login' ? 'Войти в ГастроГид' : 'Регистрация в ГастроГид'; $('#auth-password').minLength = state.authMode === 'login' ? 1 : 8; $('#auth-password').autocomplete = state.authMode === 'login' ? 'current-password' : 'new-password'; return; }
   if (target.id === 'close-menu') { $('#menu-section').classList.add('hidden'); return; }
-  if (target.id === 'logout-button') { state.token = ''; state.apiKey = ''; state.email = ''; state.role = ''; state.restaurants = []; state.restaurantTotal = 0; state.demoCount = 0; state.demo = true; state.authRequired = true; state.menuItems = []; state.feedback = new Map(); $('#account-label').textContent = 'Войти'; $('#menu-section').classList.add('hidden'); $('#results-section').classList.add('hidden'); setConnection('auth'); renderRestaurants(); loadProfile(); toast('Вы вышли из аккаунта.'); return; }
-  if (target.id === 'clear-results') { $('#results-section').classList.add('hidden'); $('#query-input').focus(); return; }
+  if (target.id === 'logout-button') { cancelSearch(); state.token = ''; state.apiKey = ''; state.email = ''; state.role = ''; state.restaurants = []; state.restaurantTotal = 0; state.demoCount = 0; state.demo = true; state.authRequired = true; state.menuItems = []; state.feedback = new Map(); $('#account-label').textContent = 'Войти'; $('#menu-section').classList.add('hidden'); $('#results-section').classList.add('hidden'); setConnection('auth'); renderRestaurants(); loadProfile(); toast('Вы вышли из аккаунта.'); return; }
+  if (target.id === 'resume-run') { resumeRun(); return; }
+  if (target.id === 'clear-results') { cancelSearch(); state.resultItems = []; $('#results-section').classList.add('hidden'); $('#query-input').focus(); return; }
 });
 $('#search-form').addEventListener('submit', search);
 $('#auth-form').addEventListener('submit', auth);
