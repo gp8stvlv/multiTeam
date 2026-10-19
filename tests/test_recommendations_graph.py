@@ -220,6 +220,58 @@ async def test_repeated_search_decisions_are_bounded_and_candidates_reach_planni
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("reference,outcome", [("m1", "ready"), ("m999", "no_matches"), ("r1", "no_matches")])
+async def test_model_references_resolve_before_authoritative_checks_and_unknown_refs_fail(reference, outcome):
+    world = World()
+    model = ScriptedModel(selections=[{"menu_item_id": reference, "portions": 1}])
+    result, traces = await run_world(world, model=model)
+    assert result["outcome"] == outcome
+    assert not any(request.url.path.endswith("/" + reference) for request in world.calls)
+    if outcome == "ready":
+        assert result["options"][0]["items"][0]["menu_item_id"] == ITEM_ID
+        assert result["options"][0]["evidence_ids"] == [EVIDENCE_ID]
+    assert '"m1"' not in json.dumps({"result": result, "traces": traces})
+
+
+@pytest.mark.asyncio
+async def test_adaptive_search_can_read_reviews_using_restaurant_references():
+    seen = []
+
+    class ReviewModel:
+        calls = 0
+
+        def bind_tools(self, tools, **kwargs):
+            return self
+
+        async def ainvoke(self, messages):
+            self.calls += 1
+            if self.calls == 1:
+                return message("search_menu", {"query": "хинкали"})
+            if self.calls == 2:
+                payload = json.loads(messages[-1].content)
+                assert payload["restaurants"][0]["id"] == "r1"
+                return message("restaurant_reviews", {"restaurant_id": "r1"})
+            return AIMessage(content="Complete")
+
+    world = World()
+
+    def respond(request):
+        if request.url.path.endswith("/reviews"):
+            seen.append(request.url.path)
+            return httpx.Response(200, json={"items": [{"id": str(uuid4()), "restaurant_id": RESTAURANT_ID,
+                "rating": 4, "text": "Good", "source": "fixture", "evidence_id": EVIDENCE_ID}]})
+        return world.respond(request)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+        graph = RecommendationGraph("test-token", lambda _: None, model=ReviewModel(), client=client)
+        graph.metrics = {"input_tokens": 0, "output_tokens": 0, "tool_names": []}
+        state = {"candidates": {}, "constraints": {}, "request": {"mode": "meal_plan"}, "search_query": "хинкали", "search_count": 0}
+        updated = await graph.search(state)
+    assert seen == [f"/api/v1/restaurants/{RESTAURANT_ID}/reviews"]
+    assert ITEM_ID in updated["candidates"]
+
+
+@pytest.mark.asyncio
 async def test_empty_plan_after_finish_is_not_ready():
     result, _ = await run_world(World(), model=ScriptedModel(empty_plan=True))
     assert result["outcome"] == "no_matches"
@@ -494,8 +546,8 @@ async def test_compact_tool_payloads_keep_full_records_and_final_checks(exclude_
                       for message in messages if isinstance(message, ToolMessage)
                       and "candidate_count" in message.content]
     assert search_replies
-    assert search_replies[0]["items"][0]["menu_item_id"] == ITEM_ID
-    assert search_replies[0]["items"][0]["evidence_ids"] == [EVIDENCE_ID]
+    assert graph.references.resolve_menu(search_replies[0]["items"][0]["menu_item_id"], {ITEM_ID}) == ITEM_ID
+    assert search_replies[0]["items"][0]["evidence_ids"] == ["e1"]
     assert len(json.dumps(search_replies[0], ensure_ascii=False)) < 6000
     assert any(request.url.path.endswith("/menu-items/" + ITEM_ID) for request in world.calls)
     if not exclude_hidden_ingredient:

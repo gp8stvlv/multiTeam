@@ -147,14 +147,14 @@ async def test_real_adapter_full_graph_tools_cross_services_and_no_secret_persis
             coordinator_count += 1
             body = completion(first_tool, {"action": action})
         elif first_tool == "MealPlan":
-            body = completion(first_tool, {"options": [{"items": [{"menu_item_id": ITEM_ID, "portions": 1}],
+            body = completion(first_tool, {"options": [{"items": [{"menu_item_id": "m1", "portions": 1}],
                 "reason_codes": ["query_match", "budget_fit"]}]})
         elif payload["messages"][-1]["role"] == "tool":
             body = completion()
         elif first_tool == "search_menu":
             body = completion(first_tool, {"query": "Хочу хинкали"})
         elif first_tool == "calculate_meal":
-            body = completion(first_tool, {"menu_item_ids": [ITEM_ID]})
+            body = completion(first_tool, {"menu_item_ids": ["m1"]})
         else:
             raise AssertionError("Unexpected adapter tool binding")
         return httpx.Response(200, json=body)
@@ -169,6 +169,7 @@ async def test_real_adapter_full_graph_tools_cross_services_and_no_secret_persis
                 result = await graph.run(RecommendationCreate(mode="dish_search", query="Хочу хинкали"))
     checked = RecommendationResult.model_validate(result)
     assert checked.outcome == "ready" and checked.options[0].total_price_minor == 75000
+    assert str(checked.options[0].items[0].menu_item_id) == ITEM_ID
     assert len(provider_requests) == 5
     assert coordinator_count == 1
     nutrition_requests = [request for request in provider_requests
