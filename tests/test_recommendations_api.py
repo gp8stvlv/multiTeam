@@ -169,9 +169,11 @@ async def test_worker_persists_typed_result_and_delegates_correct_user(client, m
     observed = {}
 
     class InjectedGraph:
-        def __init__(self, token, trace):
+        def __init__(self, token, trace, *, cache, user_id):
             observed["claims"] = jwt.decode(token, "recommendation-tests-have-a-strong-enough-secret",
                                             algorithms=["HS256"], audience="gastrogid-api", issuer="gastrogid")
+            observed["cache"] = cache
+            observed["user_id"] = user_id
             self.trace = trace
 
         async def run(self, request, context):
@@ -191,6 +193,7 @@ async def test_worker_persists_typed_result_and_delegates_correct_user(client, m
         response = client.get(f"/api/v1/recommendations/{run_id}", headers=headers).json()
         assert response["status"] == "completed" and response["result"]["outcome"] == "no_matches"
         assert observed["claims"]["sub"] == user_id
+        assert observed["user_id"] == user_id and observed["cache"].capacity == 128
         assert observed["claims"]["exp"] - observed["claims"]["iat"] == 1800
         assert observed["query"] == BODY["query"]
     finally:
@@ -204,7 +207,7 @@ async def test_worker_failure_is_sanitized_and_cancellation_requeues_job(client,
     failed_id = create_run(client, headers).json()["id"]
 
     class FailedGraph:
-        def __init__(self, token, trace):
+        def __init__(self, token, trace, *, cache, user_id):
             pass
 
         async def run(self, request, context):
@@ -231,7 +234,7 @@ async def test_worker_failure_is_sanitized_and_cancellation_requeues_job(client,
     entered = asyncio.Event()
 
     class BlockingGraph:
-        def __init__(self, token, trace):
+        def __init__(self, token, trace, *, cache, user_id):
             pass
 
         async def run(self, request, context):

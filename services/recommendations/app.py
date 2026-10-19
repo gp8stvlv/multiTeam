@@ -19,6 +19,7 @@ from services.common.security import Principal, current_user, require_admin, cre
 from services.recommendations.models import Base, RequestRow, TraceRow, FeedRow, now
 from services.recommendations.schemas import RecommendationCreate, RecommendationRun, RecommendationResult, TraceResponse, FeedPage, FeedItem, FeedPatch
 from services.recommendations.graph import RecommendationGraph, PipelineError
+from services.recommendations.cache import RecommendationCache
 from services.recommendations.provider import provider_configured, ProviderNotConfigured
 
 engine, Session = make_database("RECOMMENDATIONS_DATABASE_URL", "data/recommendations.db")
@@ -103,6 +104,7 @@ async def heartbeat(request_id, lease):
 
 
 async def worker():
+    cache = RecommendationCache()
     while True:
         try:
             job = claim_job()
@@ -117,7 +119,8 @@ async def worker():
                     session.commit()
             try:
                 token = create_access_token(Principal(user_id), lifetime_seconds=1800)
-                result = await asyncio.wait_for(RecommendationGraph(token, trace).run(RecommendationCreate.model_validate(payload), context), timeout=600)
+                result = await asyncio.wait_for(RecommendationGraph(token, trace, cache=cache, user_id=user_id)
+                    .run(RecommendationCreate.model_validate(payload), context), timeout=600)
                 result = RecommendationResult.model_validate(result).model_dump(mode="json")
                 with Session() as session:
                     session.execute(update(RequestRow).where(RequestRow.id == request_id, RequestRow.lease_owner == lease)

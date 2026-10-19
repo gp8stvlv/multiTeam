@@ -152,7 +152,11 @@ async def test_real_adapter_full_graph_tools_cross_services_and_no_secret_persis
         elif payload["messages"][-1]["role"] == "tool":
             body = completion()
         elif first_tool == "search_menu":
-            body = completion(first_tool, {"query": "Хочу хинкали"})
+            assert all(message["role"] in ("system", "user") for message in payload["messages"])
+            retrieval = json.loads(payload["messages"][-1]["content"].split("\n")[-1])
+            assert retrieval["source"] == "backend_retrieval" and retrieval["tool"] == "search_menu"
+            assert retrieval["result"]["items"][0]["menu_item_id"] == "m1"
+            body = completion()
         elif first_tool == "calculate_meal":
             body = completion(first_tool, {"menu_item_ids": ["m1"]})
         else:
@@ -170,7 +174,7 @@ async def test_real_adapter_full_graph_tools_cross_services_and_no_secret_persis
     checked = RecommendationResult.model_validate(result)
     assert checked.outcome == "ready" and checked.options[0].total_price_minor == 75000
     assert str(checked.options[0].items[0].menu_item_id) == ITEM_ID
-    assert len(provider_requests) == 5
+    assert len(provider_requests) == 4
     assert coordinator_count == 1
     nutrition_requests = [request for request in provider_requests
                           if json.loads(request.content)["tools"][0]["function"]["name"] == "calculate_meal"]

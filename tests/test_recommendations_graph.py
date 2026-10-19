@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
 
 from services.recommendations.graph import LLM_CANDIDATE_CHARS, PipelineError, RecommendationGraph, llm_candidates, llm_reviews, tighten
@@ -71,7 +71,8 @@ class ScriptedModel:
                 if isinstance(messages[-1], ToolMessage):
                     return AIMessage(content="Inspection complete.")
                 if name == "search_menu":
-                    return message(name, {"query": "Хочу хинкали"})
+                    assert "backend_retrieval" in messages[-1].content
+                    return AIMessage(content="DONE")
                 if name == "calculate_meal":
                     return message(name, {"menu_item_ids": [ITEM_ID]})
                 raise AssertionError(f"Unexpected fake-model binding: {name}")
@@ -216,7 +217,7 @@ async def test_repeated_search_decisions_are_bounded_and_candidates_reach_planni
     if not empty_search:
         assert result["options"][0]["total_price_minor"] == ITEM["price_minor"]
         assert result["options"][0]["evidence_ids"] == [EVIDENCE_ID]
-        assert len(model.calls) == 5
+        assert len(model.calls) == 4
 
 
 @pytest.mark.asyncio
@@ -246,11 +247,14 @@ async def test_adaptive_search_can_read_reviews_using_restaurant_references():
         async def ainvoke(self, messages):
             self.calls += 1
             if self.calls == 1:
-                return message("search_menu", {"query": "хинкали"})
-            if self.calls == 2:
-                payload = json.loads(messages[-1].content)
+                assert isinstance(messages[-1], HumanMessage)
+                payload = json.loads(messages[-1].content.split("\n")[-1])["result"]
                 assert payload["restaurants"][0]["id"] == "r1"
                 return message("restaurant_reviews", {"restaurant_id": "r1"})
+            assert self.calls == 2
+            payload = json.loads(messages[-1].content)
+            assert payload["items"][0]["id"] == "v1"
+            assert payload["items"][0]["evidence_id"] == "e1"
             return AIMessage(content="Complete")
 
     world = World()
@@ -437,8 +441,8 @@ async def test_refined_search_candidates_take_priority_in_the_bounded_model_view
 
         async def ainvoke(self, messages):
             self.calls += 1
-            if self.calls <= 2:
-                return message("search_menu", {"query": "initial" if self.calls == 1 else "refined"})
+            if self.calls == 1:
+                return message("search_menu", {"query": "refined"})
             return AIMessage(content="Done")
 
     state = {"candidates": {}, "constraints": {}, "request": {"mode": "meal_plan"},
@@ -448,6 +452,7 @@ async def test_refined_search_candidates_take_priority_in_the_bounded_model_view
         graph.metrics = {"input_tokens": 0, "output_tokens": 0, "tool_names": []}
         update = await graph.search(state)
     assert len(update["candidates"]) == 40 and state["candidates"] == {}
+    assert [json.loads(request.content)["query"] for request in searches] == ["initial", "refined"]
     projected = llm_candidates(update["candidates"])
     visible = {item["menu_item_id"] for item in projected["items"]}
     assert len(visible) >= 5
@@ -542,9 +547,10 @@ async def test_compact_tool_payloads_keep_full_records_and_final_checks(exclude_
     assert snapshots[0]["inspections"][0]["nutrition"]["calories_kcal"] == 620
     model_contexts = "\n".join(str(message.content) for _, messages in model.calls for message in messages)
     assert "FULL_DESCRIPTION_TAIL" not in model_contexts and "FULL_METHOD_ONLY_" not in model_contexts
-    search_replies = [json.loads(message.content) for name, messages in model.calls if name == "search_menu"
-                      for message in messages if isinstance(message, ToolMessage)
-                      and "candidate_count" in message.content]
+    search_replies = [json.loads(message.content.split("\n")[-1])["result"]
+                      for name, messages in model.calls if name == "search_menu"
+                      for message in messages if isinstance(message, HumanMessage)
+                      and "backend_retrieval" in message.content]
     assert search_replies
     assert graph.references.resolve_menu(search_replies[0]["items"][0]["menu_item_id"], {ITEM_ID}) == ITEM_ID
     assert search_replies[0]["items"][0]["evidence_ids"] == ["e1"]

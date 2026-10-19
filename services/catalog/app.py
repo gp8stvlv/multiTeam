@@ -14,12 +14,13 @@ from sqlalchemy import func, select
 from services.common.db import make_database
 from services.common.errors import install_error_handlers
 from services.common.openapi import install_gateway_security_schema
-from services.common.security import Principal, current_user, require_admin
+from services.common.security import Principal, current_user, require_admin, require_internal
 
 from .core import CatalogWorker, initialize, item_view, menu_view, publish, replace_draft, restaurant_view, semantic_search
 from .embeddings import configured_encoder
 from .extraction import MAX_BYTES, validate_file
 from .models import DishRow, EvidenceRow, ImportRow, MenuItemRow, MenuVersionRow, RestaurantRow, ReviewRow
+from .revision import recommendation_revision
 from .schemas import (Dish, Evidence, MenuDraft, MenuDraftReplace, MenuImport, MenuItem, MenuPublishRequest,
     MenuResponse, Point, Restaurant, RestaurantCreate, RestaurantPage, RestaurantPatch, Review,
     ReviewPage, SearchRequest, SearchResponse)
@@ -93,6 +94,14 @@ def create_app(database=None, encoder=None, profile_loader=None, *, seed=True, s
         return {"status": "ready" if (not start_worker or worker.ready) else "indexing",
             "embedding_model": encoder.model_name, "semantic_search": not start_worker or worker.ready,
             "warning": worker.index_error}
+
+    @application.get("/api/v1/internal/recommendation-revision", response_model=dict[str, str],
+        dependencies=[Depends(require_internal)], include_in_schema=False)
+    def catalog_recommendation_revision(response: Response, session=Depends(get_session)):
+        if session.get_bind().dialect.name == "postgresql":
+            session.connection(execution_options={"isolation_level": "REPEATABLE READ", "postgresql_readonly": True})
+        response.headers["Cache-Control"] = "no-store"
+        return {"revision": recommendation_revision(session, encoder.model_name)}
 
     @application.get("/api/v1/restaurants", response_model=RestaurantPage, tags=["Catalog"])
     def list_restaurants(limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0),
