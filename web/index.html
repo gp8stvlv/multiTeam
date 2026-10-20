@@ -22,6 +22,7 @@
         <button class="nav-item" data-page="restaurants"><span class="nav-icon">▦</span> Рестораны</button>
         <button class="nav-item" data-page="diary"><span class="nav-icon">◷</span> Дневник</button>
         <button class="nav-item" data-page="profile"><span class="nav-icon">◌</span> Профиль</button>
+        <button class="nav-item hidden" data-page="admin" id="admin-nav"><span class="nav-icon">▤</span> Меню · админ</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="sidebar-note"><span>✦</span><div><strong>Найдём ваше блюдо</strong><p>Расскажите, чего хочется и что для вас важно.</p></div></div>
@@ -78,6 +79,37 @@
         <section class="page" id="page-diary" aria-labelledby="diary-title"><div class="page-intro"><span class="section-kicker">ВАШ ДЕНЬ</span><h1 id="diary-title">Дневник питания</h1><p>Блюда сохраняются со снимком состава и КБЖУ на момент записи.</p></div><div class="diary-toolbar"><label for="diary-date">Дата</label><input id="diary-date" type="date"><button id="diary-refresh" class="outline-button">Обновить ↻</button></div><div id="diary-content"></div></section>
 
         <section class="page" id="page-profile" aria-labelledby="profile-title"><div class="page-intro"><span class="section-kicker">ВАШИ ПРЕДПОЧТЕНИЯ</span><h1 id="profile-title">Профиль</h1><p>Параметры, которые помогают точнее подбирать блюда.</p></div><div id="profile-content"></div></section>
+
+        <section class="page" id="page-admin" aria-labelledby="admin-title">
+          <div class="page-intro"><span class="section-kicker">УПРАВЛЕНИЕ КАТАЛОГОМ</span><h1 id="admin-title">Загрузка меню</h1><p>Прикрепите файл к ресторану, проверьте распознанные блюда и отдельно опубликуйте черновик.</p></div>
+          <div class="admin-grid">
+            <div class="admin-card">
+              <h2>Прикрепить меню</h2>
+              <form id="admin-upload-form" class="admin-form">
+                <label>Ресторан<select id="admin-restaurant" required></select></label>
+                <label>Файл меню<input id="admin-file" type="file" accept=".pdf,.html,.htm,.png,.jpg,.jpeg,.webp" required></label>
+                <small>PDF, HTML или изображение до 20 МБ. Загрузка создаёт черновик; опубликованное меню пока не меняется.</small>
+                <button class="primary-button" type="submit">Загрузить и распознать</button>
+              </form>
+              <details class="admin-details"><summary>Добавить ресторан</summary>
+                <form id="admin-create-form" class="admin-form">
+                  <label>Название<input name="name" required maxlength="200"></label>
+                  <label>Адрес<input name="address" required maxlength="500"></label>
+                  <div class="admin-fields"><label>Широта<input name="latitude" type="number" required min="-90" max="90" step="any" placeholder="55.75"></label><label>Долгота<input name="longitude" type="number" required min="-180" max="180" step="any" placeholder="37.62"></label></div>
+                  <label>Сайт ресторана <span class="muted">необязательно</span><input name="website" type="url" maxlength="500" placeholder="https://example.com"></label>
+                  <button class="outline-button" type="submit">Создать ресторан</button>
+                </form>
+              </details>
+            </div>
+            <div class="admin-card">
+              <h2>Открыть черновик</h2>
+              <p>Если вы закрыли страницу после загрузки, введите ID импорта, чтобы продолжить проверку.</p>
+              <form id="admin-resume-form" class="admin-form"><label>ID импорта<input id="admin-import-id" type="text" required pattern="[0-9a-fA-F-]{36}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></label><button class="outline-button" type="submit">Открыть</button></form>
+              <div id="admin-status" class="notice-box hidden" role="status" aria-live="polite"></div>
+            </div>
+          </div>
+          <div id="admin-draft" class="admin-draft hidden"></div>
+        </section>
       </main>
       <footer class="footer"><span>ГастроГид · веб-клиент</span><span id="footer-source">Данные загружаются из API</span></footer>
     </div>

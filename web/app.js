@@ -1,8 +1,9 @@
 import { profilePatch } from './profile.js';
 import { isFinishedRun, pollRecommendation } from './recommendations.js';
+import { menuSourceKind, reviewedDraftPayload } from './admin.js';
 
 const API_BASE = '/api/v1';
-const state = { page: 'home', mode: 'dish_search', apiKey: '', token: '', email: '', role: '', authMode: 'login', demo: true, authRequired: true, restaurants: [], restaurantTotal: 0, demoCount: 0, menuItems: [], resultItems: [], feedback: new Map(), pollId: 0, searchController: null, pendingRun: null };
+const state = { page: 'home', mode: 'dish_search', apiKey: '', token: '', email: '', role: '', authMode: 'login', demo: true, authRequired: true, restaurants: [], restaurantTotal: 0, demoCount: 0, menuItems: [], resultItems: [], feedback: new Map(), pollId: 0, searchController: null, pendingRun: null, admin: { jobId: '', draft: null, evidence: [], dirty: false, pollId: 0 } };
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const money = (minor, currency = 'RUB') => minor == null ? 'Цена не указана' : new Intl.NumberFormat('ru-RU', { style: 'currency', currency, maximumFractionDigits: 0 }).format(minor / 100);
@@ -20,11 +21,12 @@ class ApiError extends Error { constructor(message, status = 0) { super(message)
 async function api(path, { method = 'GET', body, headers = {}, signal } = {}) {
   const url = `${API_BASE}${path}`;
   const requestHeaders = { Accept: 'application/json', ...headers };
-  if (body !== undefined) requestHeaders['Content-Type'] = 'application/json';
+  const multipart = body instanceof FormData;
+  if (body !== undefined && !multipart) requestHeaders['Content-Type'] = 'application/json';
   if (state.apiKey) requestHeaders['X-API-Key'] = state.apiKey;
   if (state.token) requestHeaders.Authorization = `Bearer ${state.token}`;
   let response;
-  try { response = await fetch(url, { method, headers: requestHeaders, signal, body: body === undefined ? undefined : JSON.stringify(body) }); }
+  try { response = await fetch(url, { method, headers: requestHeaders, signal, body: body === undefined ? undefined : multipart ? body : JSON.stringify(body) }); }
   catch { throw new ApiError('Не удалось связаться с API. Попробуйте ещё раз позже.'); }
   let payload = null;
   try { payload = await response.json(); } catch { /* A gateway may return an empty or non-JSON error. */ }
@@ -83,7 +85,8 @@ async function rateDish(dishId, rating, button) {
   finally { button.disabled = false; }
 }
 function showPage(page) {
-  if (!['home', 'restaurants', 'diary', 'profile'].includes(page)) return;
+  if (!['home', 'restaurants', 'diary', 'profile', 'admin'].includes(page)) return;
+  if (page === 'admin' && state.role !== 'admin') { showPage('home'); return; }
   state.page = page;
   document.querySelectorAll('.page').forEach((item) => item.classList.toggle('active', item.id === `page-${page}`));
   document.querySelectorAll('.nav-item').forEach((item) => item.classList.toggle('active', item.dataset.page === page));
@@ -92,6 +95,7 @@ function showPage(page) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (page === 'diary') loadDiary();
   if (page === 'profile') loadProfile();
+  if (page === 'admin') renderAdminRestaurants();
 }
 function renderRestaurants() {
   const cards = state.restaurants.map((restaurant, index) => `<button class="restaurant-card" data-restaurant="${escapeHtml(restaurant.id)}"><div class="restaurant-visual"><span>${restaurant.icon || icons[index % icons.length]}</span></div><div class="restaurant-body"><div class="restaurant-meta">${escapeHtml(cuisine[restaurant.cuisines?.[0]] || restaurant.cuisines?.[0] || 'Ресторан')}</div><h3>${escapeHtml(restaurant.name)}</h3><p>${escapeHtml(restaurant.address)}</p><div class="restaurant-foot"><span>Смотреть меню</span><strong>Открыть ↗</strong></div></div></button>`);
@@ -116,10 +120,12 @@ async function loadRestaurants() {
     state.restaurantTotal = total;
     state.demo = false; state.authRequired = false; setConnection('online');
     state.menuItems = []; $('#menu-section').classList.add('hidden');
+    renderAdminRestaurants();
   } catch (error) {
     if (error.status === 401) {
       cancelSearch();
       state.token = ''; state.apiKey = ''; state.email = ''; state.role = ''; state.feedback = new Map(); $('#account-label').textContent = 'Войти';
+      syncAdminAccess();
       state.restaurants = []; state.restaurantTotal = 0; state.demoCount = 0; state.demo = true; state.authRequired = true; setConnection('auth');
       renderRestaurants();
       return;
@@ -150,6 +156,160 @@ async function openRestaurant(id) {
     section.innerHTML = `<div class="menu-header"><div><span class="section-kicker">МЕНЮ РЕСТОРАНА</span><h2>${escapeHtml(restaurant.name)}</h2><p>${escapeHtml(restaurant.address)}</p></div><button class="outline-button" id="close-menu">Закрыть ×</button></div><div class="menu-list">${state.menuItems.length ? state.menuItems.map((item) => renderMenuItem({ ...item, is_demo: restaurant.is_demo })).join('') : empty('Меню ещё нет', 'У этого ресторана пока нет опубликованного меню.')}</div>`;
   } catch (error) { section.innerHTML = errorBox(error.message); }
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function adminStatus(message, isError = false) {
+  const element = $('#admin-status');
+  element.textContent = message;
+  element.classList.toggle('error-box', isError);
+  element.classList.remove('hidden');
+}
+function syncAdminAccess() {
+  const allowed = state.role === 'admin' && Boolean(state.token);
+  $('#admin-nav').classList.toggle('hidden', !allowed);
+  if (!allowed) {
+    state.admin = { jobId: '', draft: null, evidence: [], dirty: false, pollId: state.admin.pollId + 1 };
+    $('#admin-draft').classList.add('hidden');
+    $('#admin-status').classList.add('hidden');
+    if (state.page === 'admin') showPage('home');
+  }
+}
+function renderAdminRestaurants(preferredId = '') {
+  if (state.role !== 'admin') return;
+  const select = $('#admin-restaurant');
+  const current = preferredId || select.value;
+  select.innerHTML = state.restaurants.length
+    ? state.restaurants.map((restaurant) => `<option value="${escapeHtml(restaurant.id)}">${escapeHtml(restaurant.name)} — ${escapeHtml(restaurant.address)}</option>`).join('')
+    : '<option value="">Сначала добавьте ресторан</option>';
+  if (state.restaurants.some((restaurant) => restaurant.id === current)) select.value = current;
+  $('#admin-upload-form button[type="submit"]').disabled = !state.restaurants.length;
+}
+function renderAdminDraft() {
+  const draft = state.admin.draft;
+  const section = $('#admin-draft');
+  if (!draft) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  const evidence = new Map(state.admin.evidence.map((item) => [item.id, item]));
+  const warnings = draft.validation_warnings?.length
+    ? `<div class="admin-warning">${draft.validation_warnings.map(escapeHtml).join('<br>')}</div>` : '';
+  const rows = draft.items.map((item, index) => {
+    const fragment = evidence.get(item.evidence_ids?.[0]);
+    const sourceText = fragment?.fragment_text || '';
+    const matchAt = sourceText.toLocaleLowerCase('ru').indexOf(item.name.toLocaleLowerCase('ru'));
+    const quote = sourceText
+      ? sourceText.slice(matchAt < 0 ? 0 : Math.max(0, matchAt - 80), matchAt < 0 ? 450 : matchAt + 370)
+      : 'Подтверждение из файла не найдено.';
+    const price = item.price_minor == null ? '' : String(item.price_minor / 100);
+    return `<details class="admin-item"><summary>${index + 1}. ${escapeHtml(item.name)} · ${item.price_minor == null ? 'укажите цену' : escapeHtml(money(item.price_minor, draft.currency))}</summary>
+      <div class="admin-item-fields">
+        <label class="admin-full">Название<input name="name-${index}" value="${escapeHtml(item.name)}" maxlength="200"></label>
+        <label>Цена, ₽<input name="price-${index}" value="${escapeHtml(price)}" inputmode="decimal" placeholder="Например, 450"></label>
+        <label>Вес порции, г<input name="weight-${index}" value="${escapeHtml(item.portion_weight_g ?? '')}" type="number" min="0.01" max="100000" step="any" placeholder="Не указан"></label>
+        <label class="admin-full">Описание<textarea name="description-${index}" maxlength="4000" rows="2">${escapeHtml(item.description || '')}</textarea></label>
+        <label class="admin-full admin-include"><input type="checkbox" name="include-${index}" checked> Оставить блюдо в меню</label>
+      </div>
+      <div class="admin-evidence">Источник${fragment?.page_number ? ` · стр. ${escapeHtml(fragment.page_number)}` : ''}: ${escapeHtml(quote)}</div>
+    </details>`;
+  }).join('');
+  section.innerHTML = `<div class="admin-draft-head"><div><span class="section-kicker">ПРОВЕРКА ИМПОРТА</span><h2>Черновик · ${draft.items.length} блюд</h2><p>ID ${escapeHtml(draft.import_id)} · редакция ${escapeHtml(draft.revision)}</p></div><span class="muted">Проверьте названия, цены, состав и вес по исходному файлу.</span></div>${warnings}
+    ${draft.items.length ? `<form id="admin-draft-form"><div class="admin-draft-list">${rows}</div><div class="admin-actions"><button class="outline-button" type="submit">Сохранить черновик</button><button class="primary-button" type="button" id="admin-publish">Опубликовать меню</button></div></form>` : empty('Блюда не распознаны', 'Попробуйте загрузить PDF с текстом, HTML или более чёткое изображение.')}`;
+}
+async function loadAdminDraft(id) {
+  const [draft, evidence] = await Promise.all([
+    api(`/menu-imports/${encodeURIComponent(id)}/draft`),
+    api(`/menu-imports/${encodeURIComponent(id)}/evidence`),
+  ]);
+  if (state.admin.jobId !== id || state.role !== 'admin') return;
+  state.admin.draft = draft; state.admin.evidence = evidence; state.admin.dirty = false;
+  renderAdminDraft();
+  adminStatus(`Черновик готов: ${draft.items.length} блюд. Проверьте и сохраните изменения перед публикацией.`);
+}
+async function pollAdminImport(id) {
+  const pollId = ++state.admin.pollId;
+  const token = state.token;
+  try {
+    for (let attempt = 0; attempt < 120; attempt++) {
+      if (state.admin.pollId !== pollId || state.token !== token) return;
+      const job = await api(`/menu-imports/${encodeURIComponent(id)}`);
+      if (state.admin.pollId !== pollId || state.token !== token) return;
+      $('#admin-import-id').value = id;
+      if (job.status === 'needs_review') { await loadAdminDraft(id); return; }
+      if (job.status === 'failed') { adminStatus(`Распознавание не удалось: ${job.error?.message || 'проверьте исходный файл.'}`, true); return; }
+      if (job.status === 'published') { adminStatus('Это меню уже опубликовано.'); return; }
+      adminStatus(`Импорт ${id}: ${job.status === 'queued' ? 'ожидает обработки' : 'распознаётся'} · ${job.progress_percent ?? 0}%.`);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+    adminStatus(`Импорт ${id} ещё обрабатывается. Нажмите «Открыть» позже.`);
+  } catch (error) { adminStatus(error.message, true); }
+}
+async function uploadAdminMenu(event) {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    const restaurantId = $('#admin-restaurant').value;
+    if (!restaurantId) throw new Error('Сначала выберите или добавьте ресторан.');
+    const file = $('#admin-file').files?.[0];
+    const kind = menuSourceKind(file);
+    const payload = new FormData();
+    payload.append('restaurant_id', restaurantId);
+    payload.append('source_kind', kind);
+    payload.append('file', file);
+    adminStatus('Загружаем файл…');
+    const job = await api('/menu-imports', { method: 'POST', body: payload });
+    state.admin.jobId = job.id; state.admin.draft = null; state.admin.evidence = []; state.admin.dirty = false;
+    renderAdminDraft();
+    $('#admin-import-id').value = job.id;
+    pollAdminImport(job.id);
+  } catch (error) { adminStatus(error.message, true); }
+  finally { button.disabled = false; }
+}
+async function createAdminRestaurant(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    const fields = new FormData(form);
+    const body = {
+      name: String(fields.get('name')).trim(), address: String(fields.get('address')).trim(),
+      location: { latitude: Number(fields.get('latitude')), longitude: Number(fields.get('longitude')) },
+      website: String(fields.get('website') || '').trim() || null, cuisines: [],
+    };
+    const restaurant = await api('/restaurants', { method: 'POST', body });
+    form.reset();
+    await loadRestaurants();
+    renderAdminRestaurants(restaurant.id);
+    adminStatus(`Ресторан «${restaurant.name}» создан. Теперь прикрепите меню.`);
+  } catch (error) { adminStatus(error.message, true); }
+  finally { button.disabled = false; }
+}
+async function saveAdminDraft(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    const payload = reviewedDraftPayload(state.admin.draft, new FormData(form));
+    const draft = await api(`/menu-imports/${encodeURIComponent(state.admin.jobId)}/draft`, { method: 'PUT', body: payload });
+    state.admin.draft = draft; state.admin.dirty = false;
+    renderAdminDraft();
+    adminStatus(`Черновик сохранён: ${draft.items.length} блюд, редакция ${draft.revision}. Теперь его можно опубликовать.`);
+  } catch (error) { adminStatus(error.message, true); button.disabled = false; }
+}
+async function publishAdminDraft(button) {
+  if (state.admin.dirty) { adminStatus('Сначала сохраните изменения в черновике.', true); return; }
+  const draft = state.admin.draft;
+  if (!draft) return;
+  try {
+    reviewedDraftPayload(draft, new FormData($('#admin-draft-form')));
+    button.disabled = true;
+    const result = await api(`/menu-imports/${encodeURIComponent(state.admin.jobId)}/publish`, {
+      method: 'POST', body: { expected_revision: draft.revision },
+    });
+    state.admin.draft = null; state.admin.dirty = false; renderAdminDraft();
+    adminStatus(`Меню опубликовано: ${result.items.length} блюд. Изменения доступны в каталоге.`);
+    await loadRestaurants();
+  } catch (error) { adminStatus(error.message, true); button.disabled = false; }
 }
 function showResults(html, scroll = true) { $('#results-section').classList.remove('hidden'); $('#results-content').innerHTML = html; if (scroll) $('#results-section').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 function constraints() {
@@ -341,6 +501,7 @@ async function auth(event) {
     const result = await api(`/auth/${state.authMode}`, { method: 'POST', body: { email, password } });
     cancelSearch();
     state.token = result.access_token; state.email = result.user?.email || email; state.role = result.user?.role || '';
+    syncAdminAccess();
     state.feedback = new Map(); syncFeedbackButtons();
     $('#account-label').textContent = state.email.split('@')[0];
     closeModal('auth-modal'); $('#auth-password').value = ''; $('#auth-api-key').value = ''; toast('Вы вошли в аккаунт.');
@@ -366,12 +527,19 @@ document.addEventListener('click', (event) => {
   if (target.dataset.mode) { if (state.mode === target.dataset.mode) return; cancelSearch(); state.mode = target.dataset.mode; $('#mode-help').textContent = state.mode === 'meal_plan' ? 'Агенты подберут сочетание блюд с учётом профиля. Это может занять несколько минут.' : 'Быстрый поиск по меню без запуска агентов.'; document.querySelectorAll('.mode').forEach((item) => item.classList.toggle('active', item === target)); return; }
   if (target.dataset.authMode) { state.authMode = target.dataset.authMode; document.querySelectorAll('[data-auth-mode]').forEach((item) => item.classList.toggle('active', item === target)); $('#auth-submit').textContent = state.authMode === 'login' ? 'Войти' : 'Зарегистрироваться'; $('#auth-title').textContent = state.authMode === 'login' ? 'Войти в ГастроГид' : 'Регистрация в ГастроГид'; $('#auth-password').minLength = state.authMode === 'login' ? 1 : 8; $('#auth-password').autocomplete = state.authMode === 'login' ? 'current-password' : 'new-password'; return; }
   if (target.id === 'close-menu') { $('#menu-section').classList.add('hidden'); return; }
-  if (target.id === 'logout-button') { cancelSearch(); state.token = ''; state.apiKey = ''; state.email = ''; state.role = ''; state.restaurants = []; state.restaurantTotal = 0; state.demoCount = 0; state.demo = true; state.authRequired = true; state.menuItems = []; state.feedback = new Map(); $('#account-label').textContent = 'Войти'; $('#menu-section').classList.add('hidden'); $('#results-section').classList.add('hidden'); setConnection('auth'); renderRestaurants(); loadProfile(); toast('Вы вышли из аккаунта.'); return; }
+  if (target.id === 'admin-publish') { publishAdminDraft(target); return; }
+  if (target.id === 'logout-button') { cancelSearch(); state.token = ''; state.apiKey = ''; state.email = ''; state.role = ''; state.restaurants = []; state.restaurantTotal = 0; state.demoCount = 0; state.demo = true; state.authRequired = true; state.menuItems = []; state.feedback = new Map(); syncAdminAccess(); $('#account-label').textContent = 'Войти'; $('#menu-section').classList.add('hidden'); $('#results-section').classList.add('hidden'); setConnection('auth'); renderRestaurants(); loadProfile(); toast('Вы вышли из аккаунта.'); return; }
   if (target.id === 'resume-run') { resumeRun(); return; }
   if (target.id === 'clear-results') { cancelSearch(); state.resultItems = []; $('#results-section').classList.add('hidden'); $('#query-input').focus(); return; }
 });
 $('#search-form').addEventListener('submit', search);
 $('#auth-form').addEventListener('submit', auth);
+$('#admin-upload-form').addEventListener('submit', uploadAdminMenu);
+$('#admin-create-form').addEventListener('submit', createAdminRestaurant);
+$('#admin-resume-form').addEventListener('submit', (event) => { event.preventDefault(); const id = $('#admin-import-id').value.trim(); if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id)) { adminStatus('Проверьте ID импорта.', true); return; } state.admin.jobId = id; state.admin.draft = null; renderAdminDraft(); pollAdminImport(id); });
+$('#page-admin').addEventListener('submit', (event) => { if (event.target.id === 'admin-draft-form') saveAdminDraft(event); });
+$('#page-admin').addEventListener('input', (event) => { if (event.target.closest('#admin-draft-form')) state.admin.dirty = true; });
+$('#page-admin').addEventListener('change', (event) => { if (event.target.closest('#admin-draft-form')) state.admin.dirty = true; });
 $('#diary-refresh').addEventListener('click', loadDiary);
 $('#diary-date').addEventListener('change', loadDiary);
 $('#page-profile').addEventListener('submit', (event) => { if (event.target.id === 'profile-form') saveProfile(event); });
@@ -380,6 +548,6 @@ $('#mobile-menu').addEventListener('click', () => $('.sidebar').classList.toggle
 document.querySelectorAll('.modal-backdrop').forEach((modal) => modal.addEventListener('click', (event) => { if (event.target === modal) closeModal(modal.id); }));
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') document.querySelectorAll('.modal-backdrop:not(.hidden)').forEach((modal) => closeModal(modal.id)); });
 $('#diary-date').value = today();
-showPage(['home', 'restaurants', 'diary', 'profile'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home');
+showPage(['home', 'restaurants', 'diary', 'profile', 'admin'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home');
 setConnection('auth');
 renderRestaurants();
